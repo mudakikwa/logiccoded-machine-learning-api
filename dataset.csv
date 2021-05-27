@@ -1,0 +1,2588 @@
+number,Timestamp,Engineer Name,title,Code Description,Application Type,Application Part,Functionality Language,code,,,,,,1,2/27/2021 18:58:53,Mugisha Isaac,users Registration,"Those code are registering both Patients  in the database(mongodb).
+I am using NodeJS for backend development. i hope to add more data field.",Web App,Backend,JavaScript,"DTO (Data to object of the patient and doctor)
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const PatientsShema = new Schema({
+    FirstName:{
+        type:String,
+        required:true,
+    },
+    LastName:{
+        type:String,
+        required:true
+    }
+})
+module.exports = mongoose.model(""Patients"",PatientsShema)
+
+const DoctorsSchema = new Schema({
+    FirstName:{
+        type:String,
+        required:true,
+        max:15,
+        min:12,
+    },
+    LastName:{
+        type:String,
+        required:true,
+        max:15,
+        min:12
+    },
+
+    DepartmentId:{
+        type:String,
+        required:true,
+    },
+    Email:{
+        type:String,
+        require:true,
+        unique:true
+    },
+    Approved:{
+       default:false,
+    },
+    Gender:{
+    type:String,
+    required:true,
+    }
+});
+const mongoose = require('mongoose');
+const Schema =  mongoose.Schema;
+const AdminSchema = new Schema({
+    username:{
+        type:String,
+        required:true,
+        max:15,
+        min:15
+    },
+    password:{
+        type:String,
+        max:30,
+        min:5
+    },
+    IsAdmin:{
+        type:Boolean,
+        required:true,
+    }
+})
+module.exports = mongoose.model('Admin',AdminSchema);
+
+Patient model , Doctors and Admin Model
+const mongoose = require('mongoose');
+const Admin = require('../DTO/Admin');
+
+module.exports = RegisterAdmin = (req) =>{
+    const admin = new Admin();
+    const {username,password,isAdmin} = req;
+    return new Promise((resolve,reject)=>{
+    admin.username = username;
+    admin.password = password;
+    admin.isAdmin = isAdmin;
+    admin.save();
+    resolve(admin);
+})
+}
+const mongoose = require('mongoose');
+const Doctor = require('../DTO/Doctors.Dto')
+
+module.exports = RegisterDoctor=(req)=>{
+    const doctor = new Doctor();
+    const {FirstName,LastName,Gender,DepartmentId,Email} = req;
+    return new Promise((resolve,reject)=>{
+        doctor.FirstName = FirstName;
+        doctor.LastName = LastName;
+        doctor.Gender = Gender;
+        doctor.DepartmentId = DepartmentId;
+        doctor.Email = Email;
+        doctor.save();
+        resolve(doctor);
+
+    })
+}
+
+const mongoose = require('mongoose');
+const Patient = require('../DTO/Patient.Dto')
+
+module.exports = RegisterPatient=(req)=>{
+   const patient = new Patient();
+   const {FirstName,LastName}=req;
+    return new Promise((resolve,reject)=>{
+        patient.FirstName=FirstName;
+        patient.LastName = LastName;
+        patient.save();
+        resolve(patient);
+    })
+}
+
+module.exports = getRegisterdPatients = ()=>{
+        const fetched_patients = Patient.find();
+        return new Promise((resolve,reject)=>{
+        resolve(fetched_patients)
+    })
+}
+
+
+Patient Controller , Doctor and Admin controller
+const RegisterAdmin = require('../models/Admin.Model');
+ module.exports = RegisterAdminController = async(req,res)=>{
+     const registerdAdmin = await RegisterAdmin(req.body);
+     console.log(registerdAdmin)
+     if(registerdAdmin){
+      res.send(registerdAdmin).status(2001);
+     }
+     else{
+         res.send('Admin Registration Failed').status(400);
+     }
+ }
+const RegisterDoctors = require('../models/Doctors.Model');
+const GetRegisterdDoctors = require('../models/Doctors.Model');
+module.exports = DoctorsRegistrationController = async(req,res)=>{
+    const RegisterdDoctor = await RegisterDoctors(req.body);
+     if(RegisterdDoctor ){
+         res.send('Doctor Registerd Successfully').status(2001);
+         return RegisterdDoctor;
+     }
+     else{
+         res.send('Doctor Registration Failed, please try again').status(400);
+         return;
+     }
+}
+
+module.exports = GetRegisterdDoctorsController = async(req,res)=>{
+    const fetched_doctors = await GetRegisterdDoctors();
+    if(fetched_doctors){
+        res.send(fetched_doctors).status(200);
+    }
+    else{
+        res.send('Can not get doctors').status(400);
+    }
+}
+const RegisterPatient = require('../models/Patient.Model');
+const fetched_patients = require('../models/Patient.Model');
+module.exports= PatientRegistrationController = async(req,res) =>{
+    const RegisterdPatient = await RegisterPatient(req.body);
+    if(RegisterPatient){
+        console.log(RegisterdPatient);
+        res.send('Patient Registerd Successfully!').status(201);
+    }
+    else{
+        console.log('Patient Registration Failed!');
+        res.send('Patient Registration Failed!').status(400);
+    }
+}
+
+module.exports = GetRegisterdPatientsController = async(req,res)=>{
+    const foundPatients = await fetched_patients();
+    if(foundPatients){
+        res.send(foundPatients).status(200);
+    }
+    else{
+        res.send('Can not get patients').status(400);
+    }
+}
+
+database model
+const mongoose = require('mongoose');
+const connectionUrl = require('../config');
+const connection = mongoose.connect(connectionUrl.DB,{
+    useNewUrlParser:true,
+    useUnifiedTopology:true
+}).then(()=>{
+    console.log('Connected to db successfully');
+}).catch(()=>console.log('Failed to connect to db'));
+module.exports = connection;
+
+database configuration
+module.exports ={
+    DB:'mongodb://localhost:27017/SmartHealthSystemDB'
+}
+
+Patients, Doctors  and Admin Routes
+const express = require('express');
+const RegisterAdminController = require('../controllers/Admin.Controller');
+const router = express.Router();
+router.route('/').post(RegisterAdminController);
+exports.AdminRoutes = router;
+
+const express = require('express');
+const DoctorsRegistrationController = require('../controllers/Doctors.Controller');
+const GetRegisterdDoctorsController  = require('../controllers/Doctors.Controller');
+const router = express.Router();
+router.route('/').post(DoctorsRegistrationController).get(GetRegisterdDoctorsController);
+exports.DoctorsRoutes = router;
+
+const express = require('express');
+const PatientRegistrationController = require('../controllers/Patients.Controller');
+const GetRegisterdPatientsController = require('../controllers/Patients.Controller');
+const router = express.Router();
+router.route('/').post(PatientRegistrationController).get(GetRegisterdPatientsController);
+exports.PatientRoutes = router;
+
+",,,,,,2,3/2/2021 10:03:11,Felix Dusengimana,Connection to database,code for connection to database it requires url to the database where you can set it in a variable given in a code.,Both,Frontend,JavaScript,"import mongoose from 'mongoose'
+const url = ""your-url-address""
+
+mongoose.connect(url,{useNewUrlParser: true,useUnifiedTopology: false,useCreateIndex: true})
+.then(()=>{
+    console.log(`we are connected via url: ${url}`);
+})
+.catch((error)=>{
+    console.log(`error while connection.\nError: `+error.message);
+})
+",,,,,,2,3/2/2021 16:27:19,Peace Cyebukayire,Opening and Closing Webcam/Video in OpenCV-Python,"The snippet provided does very little work but helpful:
+with this codes you can:
+. Capture the video via default camera or video on your local machine
+. Display every single frame from the captured video
+. The program quits when the user presses letter ""q"" on the keyboard
+
+While getting through the codes, you'll find it easier to understand since every single step has been explained in the comments.",Web App,Backend,OpenCV and Python,"import cv2
+cap = cv2.VideoCapture(0) # Capturing the video via default camera
+while cap.isOpened() : # Loop to display every single frame from the captured video
+    ret, frame = cap.read()
+    cv2.imshow(""Motion Detection Camera System"", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'): #The program quits when the user presses ""q""
+        break
+cv2.destroyAllWindows() # CLoses all the opened windows
+cap.release() # Releases the video",,,,,,3,3/3/2021 9:01:48,Peace Cyebukayire,Finding and drawing contours around the moving object,"This is a function that requires two frames from the captured video.
+.The two frames are being compared to find the difference between them (changes in frame 2 that are not in frame 1)
+
+. The difference frame is then being changed to gray color for the machine to be able to recognize the features(such as pixels) easily.
+
+. The gray frame is then being blurred to reduce the noise from the image.
+
+. After that, I compared the image pixels with the threshold
+
+. The output was dilated  ( the size of white region/foreground was increased)
+
+. The dilated image was lastly used to find and draw contours on the first frame and printed out to show the moving parts.",Both,Backend,OpenCV and Python,"def DrawContours(frame1, frame2):
+    while cap.isOpened() :
+        # Loop to draw find and draw contours around every moving object
+        diff = cv2.absdiff(frame1,frame2)
+        gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+        blur = cv2.GaussianBlur(gray, (5,5), 0)
+        _, thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
+        dilated = cv2.dilate(thresh, None, iterations=3)
+        contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        cv2.drawContours(frame1, contours, -1, (0,255,0), 2) 
+        cv2.imshow(""Motion Detection Camera System"", frame1)
+        frame1 = frame2
+        ret, frame2 = cap.read()
+        if cv2.waitKey(1) & 0xFF == ord('q'): #The program quits when the user presses ""q""
+            break",,,,,,4,3/4/2021 17:58:38,Peace Cyebukayire,Draw rectangles around the moving object in the video,"Here is a snippet of the function that will help you to draw green rectangles around the moving object in the video depending on the area of the moving object.
+
+This function requires 4 parameters.
+parameter 1 : The first frame
+parameter 2 : The second frame to be compared with the first frame
+parameter 3 : The video, it may be your own video from your machine or a video directly from the webcam.
+parameter 4 : The area of a moving object you would like to detect.
+
+The algorithm is just the same as the previous snippet about drawing contours around every single moving object,
+except that we are now drawing large rectangles around large moving object.
+
+You can exit the function by pressing ""q"" on your keyboard.
+",Both,Backend,OpenCV-Python,"def drawRectangles(frame1, frame2, video, area):
+    while video.isOpened() : # Loop to draw rectangles on large moving object
+       diff = cv2.absdiff(frame1,frame2)
+       gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+       blur = cv2.GaussianBlur(gray, (5,5), 0) # to make the image pixels black and white
+       _, thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY) # is pixel intensity is greater than set threshold, value set is set to 255 else 0
+       dilated = cv2.dilate(thresh, None, iterations=3) #Increases the size of the foreground/white region
+       contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+       for contour in contours:
+           (x, y, w, h) = cv2.boundingRect(contour)
+        
+           if cv2.contourArea(contour) < area:
+               continue
+           cv2.rectangle(frame1, (x,y), (x+w, y+h), (0, 255, 0), 2)
+           cv2.putText(frame1, ""Status: {}"".format(""Movement""), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
+
+       cv2.imshow(""Motion Detection Camera System"", frame1)
+       frame1 = frame2
+       ret, frame2 = video.read()
+       if cv2.waitKey(1) & 0xFF == ord('q'): #The program quits when the user presses ""q""
+           break",,,,,,5,3/9/2021 17:19:16,Nshimiye Emmy,Nodejs catch asynchronous errors function,"This is a global method that helps to catch all errors experienced inside the try and catch blocks of your Nodejs api's, instead of using try and catch blocks, you simply have to call this method inside your api and all is done for you.",Both,Backend,JavaScript,"module.exports = func => (req,res,next) =>
+Promise.resolve(func(req,res,next))
+   .catch(next)",,,,,,6,3/12/2021 21:42:04,Mugisha Isaac,Nodejs database configuration,The main use of the code is to specify the url of your database to connect to,Web App,Backend,JavaScript,"// this config file contains the url of your mongodb
+// to connect to
+
+module.exports ={
+    DB:'mongodb://localhost:27017/SmartHealthSystemDB'
+}",,,,,,7,3/12/2021 21:43:16,Mugisha Isaac,Nodejs database model,These codes helps you to connect to mongodb database,Web App,Backend,JavaScript,"// make sure to import our url as defined in config file and pass it to connect function of mongoose
+// if connection succeded you get a successfully message and when it fails you get failuring message
+const mongoose = require('mongoose');
+const connectionUrl = require('../config');
+const connection = mongoose.connect(connectionUrl.DB,{
+    useNewUrlParser:true,
+    useUnifiedTopology:true
+}).then(()=>{
+    console.log('Connected to db successfully');
+}).catch(()=>console.log('Failed to connect to db'));
+module.exports = connection;",,,,,,8,3/12/2021 21:44:50,Mugisha Isaac,Nodejs data to object,"These codes specifies they types of data that will be inserted in databases, their length....",Web App,Backend,JavaScript,"// Here you just define types of your data as many as you want
+
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const PatientsShema = new Schema({
+    FirstName:{
+        type:String,
+        required:true,
+    },
+    LastName:{
+        type:String,
+        required:true
+    },
+    email:{
+        type:String,
+        required:true
+    },
+    phoneNumber:{
+        type:String,
+        required:true
+    }
+})
+module.exports = mongoose.model(""Patients"",PatientsShema)",,,,,,9,3/12/2021 21:46:00,Mugisha Isaac,Nodejs model,These codes contains all methods to manuplate with data of user,Web App,Backend,JavaScript,"
+// this file contains two methods. one for Registering a patient and another to get
+// registerd patients from database. later we shall call those methods in our controllers
+const mongoose = require('mongoose');
+const Patient = require('../DTO/Patient.Dto')
+
+module.exports = RegisterPatient=(req)=>{
+   const patient = new Patient();
+   const {FirstName,LastName}=req;
+    return new Promise((resolve,reject)=>{
+        patient.FirstName=FirstName;
+        patient.LastName = LastName;
+        patient.save();
+        resolve(patient);
+    })
+}
+
+module.exports = getRegisterdPatients = ()=>{
+        const fetched_patients = Patient.find();
+        return new Promise((resolve,reject)=>{
+        resolve(fetched_patients)
+    })
+}
+",,,,,,10,3/12/2021 21:47:09,Mugisha Isaac,Nodejs controller,These codes calls the methods specified in models file,Web App,Backend,JavaScript,"// contains to methods which gets data from models and does the actual job.
+
+const RegisterPatient = require('../models/Patient.Model');
+const fetched_patients = require('../models/Patient.Model');
+module.exports= PatientRegistrationController = async(req,res) =>{
+    const RegisterdPatient = await RegisterPatient(req.body);
+    if(RegisterPatient){
+        console.log(RegisterdPatient);
+        res.send('Patient Registerd Successfully!').status(201);
+    }
+    else{
+        console.log('Patient Registration Failed!');
+        res.send('Patient Registration Failed!').status(400);
+    }
+}
+
+module.exports = GetRegisterdPatientsController = async(req,res)=>{
+    const foundPatients = await fetched_patients();
+    if(foundPatients){
+        res.send(foundPatients).status(200);
+    }
+    else{
+        res.send('Can not get patients').status(400);
+    }
+}",,,,,,11,3/12/2021 21:48:04,Mugisha Isaac,Nodejs Routes,These code contains routing of user apis,Web App,Backend,JavaScript,"// this file contains all routes for a patient forexample if a user
+// enters /patient or /patient:id.....
+
+const express = require('express');
+const PatientRegistrationController = require('../controllers/Patients.Controller');
+const GetRegisterdPatientsController = require('../controllers/Patients.Controller');
+const router = express.Router();
+router.route('/').post(PatientRegistrationController).get(GetRegisterdPatientsController);
+exports.PatientRoutes = router;",,,,,,12,3/12/2021 21:48:53,Mugisha Isaac,Nodejs index file,These codes are the main entry point of our application,Web App,Backend,JavaScript,"// this is the entry point of our application
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const connection = require('./models/Db.model')
+const app = express();
+const {PatientRoutes} = require('./routes/Patients.Routes');
+const {DoctorsRoutes} = require('./routes/Doctors.Routes');
+const {AdminRoutes} = require('./routes/Admins.Routes');
+const {DiseasesRoutes} = require('./routes/Diseases.Router');
+app.use(express.json());
+app.use('/patient',PatientRoutes);
+app.use('/doctor',DoctorsRoutes);
+app.use('/admin',AdminRoutes);
+app.use('/disease',DiseasesRoutes);
+app.listen(8080);",,,,,,13,3/13/2021 15:55:26,Nshimiye Emmy,Get All Users API method - for ADMIN route,"This function/method below {getAllUsers}, is specifically made for administrators of an application to be able to get all users of their app from the database, this helps us to query the mongoDB database which in this case i used to store the data of users.
+
+Actually this method getAllUsers, depends on the catchAsyncErrors method that I already submitted to this Deep Snippet DataHub, which helps us to handle asynchronous errors that would be handled inside the catch block of our api globally
+
+This catchAsyncErrors method catches asynchronous errors globally, you don't have to write try and catch blocks again and again in your api's, simply use this method with your api like in codes below
+
+So instead of writing try and catch blocks inside our api function, I will simple use this method like in below codes with my api function. ",Both,Backend,JavaScript,"//This method depends on {catchAsyncErrors} method
+//This method also depends on {User} schema to show the structure of our User in database 
+
+//Get all Users  => /api/v1/admin/users
+exports.getAllUsers = catchAsyncErrors(async (req,res,next)=>{
+    const users = await User.find();
+    res.status(200).json({
+        success:true,
+        Users:users
+    })
+})",,,,,,14,3/13/2021 16:30:40,Nshimiye Emmy,Global Errors Handler,"This is a global error handler class which helps us to handle all application errors globally,
+This class extends the Error, which means we are inheriting it from the Error class which is the parent class
+This error handler class contains a constructor that takes 2 parameters
+-errorMessage and statusCode
+
+Once you have given this class constructor these 2 arguments, then the rest is done for you.
+Look at how we use it to handle our errors in a function below:
+
+const ErrorHandler = require('../utils/errorHandler');
+//Handling Mongoose Validation Errors
+      if(err.name === 'ValidationError'){
+          const message = Object.values(err.errors).map(value =>value.message);
+          error = new ErrorHandler(message,400);
+      }
+You can check out my other function i have submitted in this DataHub makes use of this class.
+Once you've created it you simple have to require it in your function and pass it your errorMessage and the statusCode",Both,Backend,JavaScript,"//Error Handler class
+
+class ErrorHandler extends Error{
+constructor(message,statusCode){
+    super(message);
+    this.statusCode = statusCode
+
+    Error.captureStackTrace(this, this.constructor);
+
+}
+}
+module.exports = ErrorHandler;",,,,,,15,3/13/2021 16:49:07,Nshimiye Emmy,Get User Details API function ,"getUserDetails  API function gives authorized users to view details of particular other User in same application using UserID . In this case the administrator of the system is considered to be on to make use of this API.
+
+Actually this method getUserDetails , depends on the catchAsyncErrors method that I already submitted to this Deep Snippet DataHub, which helps us to handle asynchronous errors that would be handled inside the catch block of our api globally.
+
+This catchAsyncErrors method catches asynchronous errors globally, you don't have to write try and catch blocks again and again in your api's, simply use this method with your api like in codes below.So instead of writing try and catch blocks inside our api function, I will simple use this method like in below codes with my api function. 
+
+It also depends on the ErrorHandler class which handle global errors,  you simply have to pass it 2 arguments{message, statusCode}, check more of ErrorHandler class in this DeepSnippet DataHub, I have submitted it.",Both,Backend,JavaScript,"//This controller function depends on {ErrorHandler} class to handle global errors
+//It also depends on {catchAsyncErrors} method to handle asynch errors inside the controller api methods
+
+//Get user details  => /api/v1/admin/user/:id
+exports.getUserDetails = catchAsyncErrors(async (req,res,next)=>{
+    const user = await User.findById(req.params.id);
+    if(!user){
+        return next(new ErrorHandler('User not found', 400))    
+    }
+    res.status(200).json({
+        success:true,
+        User:user
+    })
+
+})
+",,,,,,16,3/13/2021 17:34:28,Nshimiye Emmy,Update User Details API function,"The updateUserDetails  method helps us to update the information about a User using their ID in  the database {in this case:mongoDB}, 
+In order to use it you need to require the User Shema model file inside the controller file that contains this api method.
+
+Not only that it also depends on catchAsyncErrors method that I already submitted to this Deep Snippet DataHub, which helps us to handle asynchronous errors inside our controller API function{updateUserDetails  } that would be handled inside the catch block of our api globally
+
+Find more details about catchAsyncErrors method  in this Deep Snippet DataHub",Both,Backend,JavaScript,"/*  This API method depends on the {catchAsyncErrors} method to handle catch block errors inside our controller API method  */
+
+/* It also depends on the UserSchema {User} model which contains firstname ,lastname,email,role  to know the structure of user information. */
+
+//Update  user profile    => /api/v1/admin/user/:id
+exports.updateUserDetails  = catchAsyncErrors(async (req,res,next)=>{
+    const newUserData = {
+        firstname : req.body.firstname,
+        lastname : req.body.lastname,
+        email : req.body.email,
+        role:req.body.role
+    }
+    const user  =await User.findByIdAndUpdate(req.params.id, newUserData,{
+        new:true,
+        runValidators:true,
+        useFindAndModify:false
+    })
+    res.status(200).json({
+        success:true,
+        message:'updated successfully Successfully',
+        User:user
+    })
+})",,,,,,17,3/14/2021 11:47:23,Nshimiye Emmy,Create New Order,"When building an ecommerce application, you can use this {newOrder } api method to create  and save the order that a user has made in the database,
+
+This api strongly depends on the {OrderSchema}(you can check it in this Deep Snippet i've submitted it) for defining all components of an order(like what makes an order)
+
+It also depends on the catchAsyncErrors method for handling asynchrounous errors inside our controller api method. Instead of writing the try and catch blocks inside this api you can simply use this method with your api. It is a global method, you can use it with all your api methods",Both,Backend,JavaScript,"//this api for saving an order in the database depends on {catchAsyncErrors} method 
+
+//Create a new Order  => /api/v1/order/new
+
+exports.newOrder = catchAsyncErrors(async(req,res,next)=>{
+
+    const {
+        orderItems,
+        shippingInfo,
+        itemsPrice,
+        taxPrice,
+        shippingPrice,
+        totalPrice,
+        paymentInfo
+
+    } = req.body
+    const order = await Order.create({
+        orderItems,
+        shippingInfo,
+        itemsPrice,
+        taxPrice,
+        shippingPrice,
+        totalPrice,
+        paymentInfo,
+        paidAt:Date.now(),
+        user:req.user._id
+    })               
+    res.status(200).json({
+        success:true,
+        Order:order
+    })
+
+})",,,,,,18,3/14/2021 11:57:45,Nshimiye Emmy,Order Schema ,"The codes below defines the structure of an order request, All order requests depends on this structure.
+This structure is required by all controller api methods for Orders like { create Order, Delete Order } and many others.You can check the controller API methods that I submitted to this Deep Snippet Data Hub and see how to use it.
+
+To use it in your controller, you simple have to require it
+",Both,Backend,JavaScript,"const mongoose = require('mongoose');
+
+const orderSchema = new mongoose.Schema({
+//Below we are going to first be handling the shipping info of the order.
+    shippingInfo:{
+
+        address:{
+        type:String,
+        required:true
+        },
+        city:{
+            type:String,
+            required:true
+            },
+        phoneNumber:{
+                type:String,
+                required:true
+                },
+        postalCode:{
+                    type:String,
+                    required:true
+                    },
+        country:{
+                    type:String,
+                    required:true
+                    }
+                },
+
+//We are also gonna be getting the Info of User who placed an order
+        user:{
+            type: mongoose.Schema.Types.ObjectId,
+            required:true,
+            ref:'User',
+            },
+
+/*
+This is getting all the products that the user want to buy in this order.
+ So this will be array of all order items
+ Each product in order contains name,quantity,image,price
+*/
+        orderItems:[
+            {
+            name:{
+                 type:String,
+                  required:true
+                }, 
+            //Quantity of that product that, that user want to purchase{order}
+            quantity:{
+                   type:Number,
+                    required:true
+                 },
+            image:{
+                type:String,
+                required:true
+                },
+            price:{
+                type:String,
+                required:true
+                },
+            //reference of that product
+            product:{
+                type:mongoose.Schema.Types.ObjectId,
+                required:true,
+                ref:'Product'
+                   },
+               },
+               ],
+
+           /*Information about order payment, in this case  we are going to be using stripe payment
+           So we need ID of Stripe{Stripe gives us ID of the transaction}, 
+            and also the status of that transaction
+           */
+           paymentInfo:{
+               id:{
+                   type:String, 
+               },
+               status:{
+                   type:String
+               }
+            },
+            payedAt:{
+                type:Date
+            },
+        /*itemsPrice is like total price of items only, like if you want to purchase apple watch & it's price is $3
+        and you want to purchase apple watch of quantity 1, then price is $3 
+        */
+           itemsPrice:{
+               type:Number,
+               require:true,
+               default:0.0
+           } , 
+         //Below is where we are going to calculate the tax price
+         taxPrice:{
+            type:Number,
+            require:true,
+            default:0.0
+        },
+        /* Below is where we are going to calculate the shipping price depending on what they purchased 
+        like if user has purchased products of price greater than $100 then shipping price=0 and when purchase price is below $100 then sipping price=$25
+        */
+        shippingPrice:{
+            type:Number,
+            require:true,
+            default:0.0
+        },
+        //This is the total amount of money that user has to pay, it's addition of shippingPrice,taxPrice and itemsPrice
+        totalPrice:{
+            type:Number,
+            require:true,
+            default:0.0
+        },
+    //Order status defines the status of the order whether delivered or comfirmed or processing etc
+        orderStatus:{
+            type:String,
+            require:true,
+            default:'Processing'
+        },
+        deliveredAt:{
+            type:Date
+        },
+    createdAt:{
+        type:Date,
+        default:Date.now()
+    }
+});
+module.exports = mongoose.model('Order', orderSchema);
+
+",,,,,,19,3/14/2021 12:51:20,Nshimiye Emmy,Get All Orders,"The method below {allOrders} is used to retrieve all orders from the database, this APi is mostly used by admins to accesss all orders from the database
+
+/* the {allOrders} API method depends on the orderSchema(to define the structure of an order), you have to give it path to orderschema, forexample: const Order = require('../models/ordersSchema');
+*/
+
+the {allOrders} API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method, you simple have to supply the path to the file that has catchAsyncErrors method forexample const catchAsyncErrors = require('../middlewares/catchAsyncErrors')",Both,Backend,JavaScript,"/* the {allOrders} API method depends on the orderSchema, 
+the {allOrders} API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method,)
+*/
+
+//Get all orders => /api/v1/orders
+exports.allOrders = catchAsyncErrors(async(req,res,next)=>{
+    const order = await Order.find();
+//Return the response with all orders and success to true
+    res.status(200).json({
+        success:true,
+        Orders:order
+    })
+})",,,,,,20,3/14/2021 12:52:29,Nshimiye Emmy,Get All Orders API method,"The method below {allOrders} is used to retrieve all orders from the database, this APi is mostly used by admins to accesss all orders from the database
+
+/* the {allOrders} API method depends on the orderSchema(to define the structure of an order), you have to give it path to orderschema, forexample: const Order = require('../models/ordersSchema');
+*/
+
+the {allOrders} API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method, you simple have to supply the path to the file that has catchAsyncErrors method forexample const catchAsyncErrors = require('../middlewares/catchAsyncErrors')",Both,Backend,JavaScript,"/* the {allOrders} API method depends on the orderSchema, 
+the {allOrders} API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method,)
+*/
+
+//Get all orders => /api/v1/orders
+exports.allOrders = catchAsyncErrors(async(req,res,next)=>{
+    const order = await Order.find();
+//Return the response with all orders and success to true
+    res.status(200).json({
+        success:true,
+        Orders:order
+    })
+})",,,,,,21,3/14/2021 13:00:27,Nshimiye Emmy,Get logged in user orders API method,"
+The method below {myOrders } is used to retrieve all orders of currently logged In User from the database.
+
+/* the {myOrders } API method depends on the orderSchema(to define the structure of an order), you have to give it path to orderschema, forexample: const Order = require('../models/ordersSchema');
+*/
+
+the {allOrders} API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method, you simple have to supply the path to the file that has catchAsyncErrors method forexample const catchAsyncErrors = require('../middlewares/catchAsyncErrors')
+Instead of writing the try and catch blocks inside your API controller method you can simply 
+use the catchAsyncErrors method to catch errors.",Both,Backend,JavaScript,"/* the {myOrders } API method depends on the orderSchema todefine structure of an order, 
+the {myOrders } API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method,)
+*/
+
+
+//Get logged in user orders => /api/v1/orders/me
+exports.myOrders = catchAsyncErrors(async(req,res,next)=>{
+    const order = await Order.find({user:req.user.id});
+    res.status(200).json({
+        success:true,
+        Order:order
+    })
+})",,,,,,22,3/14/2021 19:46:50,Nshimiye Emmy,Get all Orders API method  (Updated),"This is an updated version of the method I submitted that helps the admins get all orders from the database.
+I added a functionality to calculate total amount of money from all orders, this would help a person to provide a report on how much income they have.",Both,Backend,JavaScript,"//Get all orders => /api/v1/admin/orders
+exports.allOrders = catchAsyncErrors(async(req,res,next)=>{
+    const orders = await Order.find();
+
+    //Calculating the total amount of money for all orders in the database
+    let totalAmount = 0
+    orders.forEach(order =>{
+        totalAmount += order.totalPrice
+    })
+//returning the response
+    res.status(200).json({
+        success:true,
+        TotalAmount:totalAmount,
+        Orders:orders
+    })
+})",,,,,,23,3/15/2021 7:48:36,Nshimiye Emmy,Delete an Order Using it's ID,"
+The method below {deleteOrder } is used to retrieve an orders using it's ID from the database. This APi is mostly used by admins to delete order.
+
+/* the {deleteOrder } API method depends on the orderSchema(to define the structure of an order), you have to give it path to orderschema, forexample: const Order = require('../models/ordersSchema');
+*/
+
+the {deleteOrder } API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method, you simple have to supply the path to the file that has catchAsyncErrors method forexample const catchAsyncErrors = require('../middlewares/catchAsyncErrors')
+Instead of writing the try and catch blocks inside your API controller method you can simply 
+use the catchAsyncErrors method to catch errors.
+You can check these requirements {orderSchema,catchAsyncErrors}. in this Data Hub I have already submitted them for more information",Both,Backend,JavaScript,"/* the {deleteOrder } API method depends on the orderSchema to define structure of an order, so you have to require Orderschema in order to use this method
+the {deleteOrder } API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method,)
+*/
+
+//Delete an Order  => /api/v1/admin/order/:id
+exports.deleteOrder = catchAsyncErrors(async(req,res,next)=>{
+    const order = await Order.findById(req.params.id);
+    //check if order exists
+    if(!order){
+        return next(new ErrorHandler(`Order not Found with id ${req.params.id}`, 404)); 
+    }
+   // if order exists then remove(delete) it from the database
+    await order.remove();
+    res.status(200).json({
+        success:true,
+        message:""Order deleted successfully""
+    })
+})
+",,,,,,24,3/15/2021 12:56:04,Nshimiye Emmy,Create / Update a review on a product,"This method {createProductReview } provides functionality to allow customers or any user of an ecommerce app to create a review or update a review, This APi  method is mostly used by customers to give feedback on products.
+A review is a feedback provided by the user on the products we are selling, when the customer visits an ecommerce site and finds there a nice product he/she  can leave a feedback on that product showing how he/she was impressed by that product.
+
+/* the {createProductReview } API method depends on the productSchema(to define the structure of an order), you have to give it path to productschema, forexample: const Order = require('../models/productSchema');
+*/
+
+the {createProductReview } API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method, you simple have to supply the path to the file that has catchAsyncErrors method forexample const catchAsyncErrors = require('../middlewares/catchAsyncErrors')
+Instead of writing the try and catch blocks inside your API controller method you can simply 
+use the catchAsyncErrors method to catch errors.
+You can check these requirements {orderSchema,catchAsyncErrors}. in this Data Hub I have already submitted them for more information
+",Both,Backend,JavaScript,"/* the {createProductReview } API method depends on the productSchema todefine structure of a product which include also a review, 
+the {createProductReview } API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method,)
+*/
+
+//Create new review  => /api/v1/review/new
+exports.createProductReview = catchAsyncErrors(async(req,res,next)=>{
+    const {rating, comment, productId} = req.body;
+    const review = {
+        user:req.user._id,
+        name:req.user.name,
+        rating:Number(rating),
+        comment
+    }
+     //finding the product, a user wants to review
+    let product =await Products.findById(productId);
+    //checking if the product is already reviewed by that logged in user
+    const isReviewed = product.reviews.find(
+    //checking if this review matches current user, to mean that this user has already reviewed this product
+      r => r.user.toString() === req.user._id.toString()
+    )
+    if(isReviewed){
+        //if product is already reviewed by that user, that means that i simply have to update that review
+        product.reviews.forEach(review => {
+            if(review.user.toString() === req.user._id.toString()){
+                review.comment = comment,
+                review.rating = rating
+            }
+        });
+         
+    }else{
+        
+     // if user has not reviewed the product before, we are going to push the review to the product
+      product.reviews.push(review);
+      //And then update the numberOfReviews on product
+      product.numberOfReviews = product.reviews.length;
+    }
+    //Updating the total ratingsusing reduce() that will reduce the multiple values{many reviews} to one single value {ratings}
+    product.ratings = product.reviews.reduce((acc,item) =>item.rating + acc, 0) / product.reviews.length
+
+    //then save the product
+    await product.save({validateBeforeSave:false})
+    //retun response
+    res.status(200).json({
+        success:true,
+        message:'Reviews updated successfully',
+        Product:product
+    })
+
+})
+",,,,,,25,3/15/2021 13:29:50,Nshimiye Emmy,Get All Product Reviews API method,"This APi method provides the functionality to allow users to get all reviews for a specific product
+
+/* the {getAllProductReviews } API method depends on the productSchema(to define the structure of an order), you have to give it path to productschema, forexample: const Order = require('../models/productSchema');
+*/
+
+the {getAllProductReviews } API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method, you simple have to supply the path to the file that has catchAsyncErrors method forexample const catchAsyncErrors = require('../middlewares/catchAsyncErrors')
+Instead of writing the try and catch blocks inside your API controller method you can simply 
+use the catchAsyncErrors method to catch errors.
+This method also depends on ErrorHandler Class which extends the Error parent class, to help us handle all errors globally.
+You can check these requirements {orderSchema,catchAsyncErrors,ErrorHandler class}. in this Data Hub I have already submitted them for more information
+",Both,Backend,JavaScript,"/* the {getAllProductReviews } API method depends on the productSchema to define structure of a product, 
+the {getAllProductReviews } API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method)
+the {getAllProductReviews } API method also depends on the {ErrorHandler} class to handle all application errors globally)
+
+*/
+
+//Get all product reviews  => /api/v1/admin/reviews
+exports.getAllProductReviews = catchAsyncErrors(async(req,res,next)=>{
+//getting the product by it's ID
+const product = await Products.findById(req.query.id);
+if(!product){
+    return next(new ErrorHandler('Product not Found', 404));
+}
+res.status(200).json({
+    success:true,
+
+// return the reviews of that product
+    Reviews:product.reviews,
+})
+})",,,,,,26,3/16/2021 8:13:56,Oreste Abizera,Connecting to database in Node.js,"The main use of this code is to easily to Mongodb database in Node js.
+It uses mongoose module.
+Instructions: set MONGO_URI in the environment or replace it with your mongo Uri in the code",Both,Backend,JavaScript,"/* function to connect to the mongodb in Node js */ 
+const mongoose = require(""mongoose""); 
+const connectToDB = async () => {
+ let connect = await mongoose.connect(process.env.MONGO_URI, {
+ useCreateIndex: true,
+ useUnifiedTopology: true,
+ useNewUrlParser: true,
+ useFindAndModify: false,
+ });
+ console.log(`mongodb connected: ${connect.connection.host}`); }; 
+connectToDB();",,,,,,27,3/15/2021 18:39:57,Blessing Hirwa,Custom Button,"This button will take 8 props:
+-Button background color
+-Button margin bottom
+-Button padding
+-Button width
+-Button border width
+-Button border radius
+-Title
+-Button border color(In my case we have a primary and secondary button. primary button will have a border color of #010035 and secondary will have #FF6E4E and if none of them is provided the button's border color will be transparent).
+
+? All the provided colors are globally configured in colors.js file and they can be replaced by any file.",Mobile App,Frontend,React Native,"import React from ""react"";
+import { StyleSheet, Text, TouchableOpacity } from ""react-native"";
+import { useFonts, Inter_900Black } from ""@expo-google-fonts/inter"";
+
+import colors from ""../config/colors"";
+
+export default function CustomButton({
+  bgColor,
+  buttonMarginBottom,
+  buttonPadding,
+  buttonWidth,
+  buttonBorderWidth,
+  buttonRadius,
+  title,
+  buttonBorderColor,
+}) {
+  useFonts({
+    Inter_900Black,
+  });
+
+  const styles = StyleSheet.create({
+    button: {
+      //   flex: 1,
+      backgroundColor: bgColor,
+      marginBottom: buttonMarginBottom,
+      padding: buttonPadding,
+      width: buttonWidth,
+      borderWidth: buttonBorderWidth,
+      borderRadius: buttonRadius,
+      borderColor: buttonBorderColor
+        ? colors[buttonBorderColor]
+        : ""transparent"",
+    },
+
+    buttonTextColor: {
+      color: ""#fff"",
+      alignSelf: ""center"",
+      fontSize: 17,
+      fontFamily: ""Inter_900Black"",
+    },
+  });
+  return (
+    <TouchableOpacity style={styles.button}>
+      <Text style={styles.buttonTextColor}>{title}</Text>
+    </TouchableOpacity>
+  );
+}
+",,,,,,28,3/16/2021 9:55:57,Blessing Hirwa,DoubleTap component in react native,"This is a custom component that listens to double tap in react native as for now there's no inbuilt method of handling the doubleTap event. The component DoubleTap will take two props(delay, toggleLike). Toggle like is any function from the calling/parent component that will contain what to happen after double click happens. An example can be adding a like when an image is tapped twice. The component containing imag will be like this: 
+
+//toggleLike is a custom function defined in the current component where DoubleTap is being called.    
+  <DoubleTap onDoubleTap={toggleLike}>
+        <Image
+          source={require(""../assets/image.png"")}
+          style={styles.productImage}
+        />
+      </DoubleTap>
+
+? When delay or doubletap handler(which in our case is toggleLike) function is not passed to DoubleTap delay will be set to 300ms and toggleLike will be set to null.",Mobile App,Frontend,React Native (Javascript),"export default function DoubleTap(props) {
+  const defaultProps = {
+    delay: 300,
+    onDoubleTap: () => null,
+  };
+
+  let lastTap = null;
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    if (lastTap && now - lastTap < (defaultProps.delay || props.delay)) {
+      props.onDoubleTap() || defaultProps.onDoubleTap();
+    } else {
+      lastTap = now;
+    }
+  };
+
+  return (
+    <TouchableWithoutFeedback onPress={handleDoubleTap}>
+      {props.children}
+    </TouchableWithoutFeedback>
+  );
+}",,,,,,29,3/16/2021 10:05:43,Blessing Hirwa,Toggle like function,A simple function that is used to keep track of the state of a liked product. This function will  set the state to true if the product was liked otherwise false. The liked product will be added to Wishlist.,Mobile App,Frontend,React Native(javascript),const toggleLike = () => setLiked(!liked);,,,,,,30,3/16/2021 15:41:28,Blessing Hirwa,Toggle like function,This is a custom function was used inside DoubleTap and it's used to update the state of a liked product. If the product is liked it will set liked to true otherwise false.ToggleLIke can be changed or called any other name.,Mobile App,Frontend,React Native,"  const [liked, setLiked] = useState(false);
+
+  const toggleLike = () => setLiked(!liked);",,,,,,31,3/16/2021 15:47:16,Blessing Hirwa,Custom button(update),This is the same as the previously submitted component but the difference is that I've corrected the typo which was in the name of the props of the custom button.,Mobile App,Frontend,React Native,"export default function CustomButton({
+  bgColor,
+  buttonMarginBottom,
+  buttonPadding,
+  buttonWidth,
+  buttonBorderWidth,
+  buttonRadius,
+  title,
+  buttonBorderColor,
+}) {
+  const styles = StyleSheet.create({
+    button: {
+      //   flex: 1,
+      backgroundColor: bgColor,
+      marginBottom: buttonMarginBottom,
+      padding: buttonPadding,
+      width: buttonWidth,
+      borderWidth: buttonBorderWidth,
+      borderRadius: buttonRadius,
+      borderColor: buttonBorderColor
+        ? colors[buttonBorderColor]
+        : ""transparent"",
+    },
+
+    buttonTextColor: {
+      color: ""#fff"",
+      alignSelf: ""center"",
+      fontSize: 17,
+    },
+  });
+  return (
+    <TouchableOpacity style={styles.button}>
+      <Text style={styles.buttonTextColor}>{title}</Text>
+    </TouchableOpacity>
+  );
+}",,,,,,32,3/17/2021 7:13:45,Nshimiye Emmy,Update order / status,"/* the {updateOrder } API method depends on the orderSchema todefine structure of an order, 
+the {updateOrder } API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method,)
+*/
+
+The way this method works:
+-Firstly create a order controller file  and paste the method below,
+-In that controller file make sure to require/include the path to the orderSchema
+-Do not forget to include path to catchAsyncErrors method
+-Also make sure to require ErrorHandler class in that controller
+NB: You can find all these requirement listed above, in this Deep Snippet Data Hub.
+-Create another file for order routes and then create route for this API method.
+
+How it works:
+this method will first search for an order you want to update using it's ID like below:
+  const order = await Order.findById(req.params.id);
+
+If it finds it, Since we want to update order with any other status except ''Delivered'', it will first check if the order is delivered. If it's delivered then it wont allow you to update this order
+  if(order.orderStatus === 'Delivered'){
+   return next(new ErrorHandler('You have already delivered this order',400))
+    }
+    
+Else if not delivered,it will start updating;it will updated the req.body which i our case includes orderStatus, and also it sets deliveredAt date to Date.now()
+order.orderStatus = req.body.orderStatus,
+order.deliveredAt = Date.now()
+
+This method will also loop through the orderedItems(orderedProducts) and update the quantity of those products in our database by reducing it's quantity:
+    order.orderItems.forEach(async item => {
+        //function to update product quantity
+      await updateQuantity(item.product,item.quantity)
+    })
+Below is the function updateQuantity():
+ async function updateQuantity(id, quantity) {
+    const product = await Product.findById(id)     
+    product.quantity = product.quantity - quantity; 
+    await product.save({ validateBeforeSave:false });
+}
+
+And after all of that it will save the order:
+ await order.save({ validateBeforeSave:false })
+and return the response which in my case includes success, message and the updated order
+ res.status(200).json({
+        success:true,
+        message:""Order updated successfully"",
+        Orders:order
+    })
+",Both,Backend,JavaScript,"
+/* the {updateOrder } API method depends on the orderSchema todefine structure of an order, 
+the {updateOrder } API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method,)
+*/
+
+
+//update / Process orders => /api/v1/admin/order/:id
+exports.updateOrder = catchAsyncErrors(async(req,res,next)=>{
+    const order = await Order.findById(req.params.id);
+
+    //Checking if the orderStatus if not delivered and then update
+    if(order.orderStatus === 'Delivered'){
+   return next(new ErrorHandler('You have already delivered this order',400))
+    }
+    
+    //updating the quantity of Product items quantity back in products table after a purchase
+    order.orderItems.forEach(async item => {
+     
+        //function to update product quantity
+      await updateQuantity(item.product,item.quantity)
+    })
+    
+    //updating the order status and the delivered date
+    order.orderStatus = req.body.orderStatus,
+    order.deliveredAt = Date.now()
+    
+   await order.save({ validateBeforeSave:false })
+    res.status(200).json({
+        success:true,
+        message:""Order updated successfully"",
+        Orders:order
+    })
+})
+//method to update the product quantity when the order is made on that product(this is like reducing it's quantity in db when it has been placed on an order)
+  async function updateQuantity(id, quantity) {
+    const product = await Product.findById(id)     
+    product.quantity = product.quantity - quantity; 
+    await product.save({ validateBeforeSave:false });",,,,,,33,3/17/2021 7:29:22,Nshimiye Emmy,Get Single Order by it's ID,"
+The way this method works:
+-Firstly create a order controller file  and paste the method below,
+-In that controller file make sure to require/include the path to the orderSchema
+-Do not forget to include path to catchAsyncErrors method
+-Also make sure to require ErrorHandler class in that controller
+NB: You can find all these requirement listed above, in this Deep Snippet Data Hub.
+-Create another file for order routes and then create route for this API method.
+
+How it works:
+this method will first search for an order you want to update using it's ID like below:
+    const order = await Order.findById(req.params.id).populate('user','name email');
+
+If it doesn't find that order it return an error message and status code using ErrorHandler class:
+ if(!order){
+        return next(new ErrorHandler(`Order not Found with id ${req.params.id}`, 404)); 
+    }
+
+Else if it finds it it will return that order of that ID inside our response:
+res.status(200).json({
+        success:true,
+        Order:order
+    })
+
+
+ the {getSingleOrder } API method depends on the orderSchema(to define the structure of an order), you have to give it path to orderschema, forexample: const Order = require('../models/ordersSchema');
+
+ the {getSingleOrder } API method depends on the ErrorHandler(this class extends the Error class), you have to give it path forexample: const ErrorHandler = require('../utils/errorHandler.js');
+
+the {getSingleOrder } API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method, you simple have to supply the path to the file that has catchAsyncErrors method forexample const catchAsyncErrors = require('../middlewares/catchAsyncErrors')
+Instead of writing the try and catch blocks inside your API controller method you can simply 
+use the catchAsyncErrors method to catch errors.
+You can check these requirements {orderSchema,catchAsyncErrors}. in this Data Hub I have already submitted them for more information
+",Both,Backend,JavaScript,"/* the {getSingleOrder} API method depends on the orderSchema todefine structure of an order, 
+the {getSingleOrder} API method also depends on the {catchAsyncErrors} method, to handle async errors inside our controller API method,)
+*/
+the {getSingleOrder} API method also depends on the {ErrorHandler} class, handle Errors globally
+*/
+
+exports.getSingleOrder = catchAsyncErrors(async(req,res,next)=>{
+    const order = await Order.findById(req.params.id).populate('user','name email');
+    if(!order){
+        return next(new ErrorHandler(`Order not Found with id ${req.params.id}`, 404)); 
+    }
+    res.status(200).json({
+        success:true,
+        Order:order
+    })
+})
+",,,,,,34,3/17/2021 7:52:05,Nshimiye Emmy,productSchema,"This is simply a product schema that defines the structure of our products in the database, like what our product should have, what it doesn't haveand many others,
+
+This productSchema is required by any other product controller APi method.
+This Schema defines our product to have name,price,description,manufacturer,ratings,image,category,quantity,numOfReviews,arrayOf all Reviews, createdAt date
+
+Note that: In this productSchema for the case of images I used cloudinary app for storing my images which requires the public_id and url of that image.
+Simply go to cloudinary.com and get enough space for aploading your images",Both,Backend,JavaScript,"//This productSchema requires the mongoose 
+
+const mongoose = require('mongoose')
+
+const productSchema = new mongoose.Schema({
+
+    name:{
+        type:String,
+        required:[true,'Please enter product name'],
+        trim:true, 
+        maxLength:[50, 'Product name cannot exceed 50 characters'],
+    },
+    price:{
+        type:Number,
+        required:[true,'Please enter product Price'],
+        default:0.0
+    },
+    description:{
+        type:String,
+        required:[true,'Please enter product Description'],
+    },
+    manufacturer:{
+        type:String,
+        required:[true,'Please enter Manufacturer name'],
+        maxLength:[20, 'Manufacturer name cannot exceed 20 characters'],
+    },
+    ratings:{
+        type:Number,
+        default:0
+    },
+    images:[
+        {
+            public_id:{
+                type:String,
+                required:true
+            },
+            url:{
+                type:String,
+                required:true
+            }
+       }
+    ],
+    category:{
+        type:String,
+        required:[true, 'Please select the category for this product'],
+        //I defined product Categories an enum values 
+        enum:{
+            values:[
+                'Electronics',
+                'Cameras',
+                'Laptops',
+                'Accessories',
+                'Headphones',
+                'Clothes/Shoes',
+                'Education/Books',
+                'Beauty/Health',
+                'Sports',
+                'Outdoor'
+            ],
+            message: 'Please select the correct category for Product'
+        }
+    },
+    quantity:{
+        type:Number,
+        required:[true, 'Please Enter Product Quantity in Stock'],
+        maxLength:[5, 'Product Quantity can not exceed 5 characters'],
+        default:0
+    },
+    numOfReviews:{
+        type:Number,
+        default:0
+    },
+    reviews:[
+        {
+            user:{
+                type:mongoose.Schema.ObjectId,
+                ref:'User',
+                required:true
+            },
+            name:{
+                type:String,
+                required:true
+            },
+            rating:{
+                type:Number,
+                required:true
+            },
+            comment:{
+                type:String,
+                required:true
+            }
+        }
+    ],
+    user:{
+        type:mongoose.Schema.ObjectId,
+        ref:'User',
+        required:true
+    },
+    createdAt:{
+        type:Date,
+        default:Date.now()
+        }
+})
+module.exports = mongoose.model('Products', productSchema);
+
+",,,,,,35,3/17/2021 8:29:05,Nshimiye Emmy,Authenticating a User,"//Checking if the user is authenticated or not
+const User = require('../models/users') //give path to your userSchema
+
+//give path to your catchAsyncErrors method live above
+const catchAsyncErrors = require(""./catchAsyncErrors"");//For catching asynchronous errors inside our API method
+
+//give path to your ErrorHandler class
+const ErrorHandler = require('../utils/errorHandler'); //For  handling errors global errors
+
+//require jwt package
+ const jwt = require('jsonwebtoken'); //require jwt package 
+
+How it works:
+-First create another folder  in your project folderand  name it middlewares, inside middlewares, create a file and name it authenticate.js
+
+-Inside the authenticate.js copy and paste the codes below
+NB:make sure to include everything as listed above
+
+-This method will first check for for the token in the cookie,
+like below:
+        const {token} = req.cookies;
+ I used cookie for storing tokens since it's considered as the best and secure way to store tokens
+
+-If the no token is found in the cookie then it will return error message with statusCode as below:
+if(!token){
+            return next(new ErrorHandler('Login first to access this resource', 401));
+        }
+Else if the token is found, you have to validate it with the JWT_SECRET key using jwt npm package that you defined 
+like below:
+const decoded = jwt.verify(token,process.env.JWT_SECRET);
+
+Then if that token is valid to that user who is requesting for a resource, then the user is given access to that resource like below:
+       req.user = await User.findById(decoded.id);
+        next()
+
+",Both,Backend,JavaScript,"/*-This method require/depends on your userSchema, so make sure to give path to your userSchema
+-It also depends on catchAsyncErrors method to catch async errors inside our method
+-It also depends on ErrorHandler class for hadnling errors globally
+-It also depends on jwt npm package since we will be validating the jwt token in the cookie
+-It also depends on JWT_SECRET key that stores our secret key
+NB:Check more information of these requirements in this Deep Snippet Data Hub, i have submitted them too.
+*/
+ 
+exports.isUserAuthenticated = catchAsyncErrors(async (req,res,next)=>{
+        const {token} = req.cookies;
+        
+        if(!token){
+            return next(new ErrorHandler('Login first to access this resource', 401));
+        }
+        const decoded = jwt.verify(token,process.env.JWT_SECRET);
+        req.user = await User.findById(decoded.id);
+        next()
+})",,,,,,36,3/17/2021 8:45:46,Oreste Abizera,User Model,"This code is for creating a user model with some basic attributes.
+It uses mongoose for creating the schema.",Both,Backend,JavaScript,"constmongoose=require(""mongoose"");
+const UserSchema=newmongoose.Schema({
+names:{
+type:String,
+required:[true,""Names are required""],
+minlength:[3,""names must be at least 3c haracters""],
+maxlength:[255,""names must not be more than 255 characters""],
+trim:true,
+},
+email:{
+type:String,
+required:[true,""please add an email""],
+match:[/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,""Please add a valid email""],
+unique:[true,""email already taken""],
+},
+phone:{
+type:String,
+minlength:[10,""Phone number has to be 10 characters""],
+maxlength:[10,""Phone number has to be 10 characters""],
+},
+password:{
+type:String,
+minlength:[6,""Password must be at least 6 characters long""],
+maxlength:[255,""password must not be more than 255 characters""],
+required:[true,""Please add a password""],
+select:false,
+},
+
+});
+
+module.exports=mongoose.model(""User"",UserSchema);",,,,,,37,3/17/2021 8:51:19,Oreste Abizera,Hash Password,"This code is for encrypting password.
+It uses bcrypt.",Both,Backend,JavaScript,"const bcrypt = require(""bcryptjs"");
+const hashPassword = async(password)=>{
+let salt = await bcrypt.genSalt(10);
+let hashed = await bcrypt.hash(password,salt);
+return hashed;
+}",,,,,,38,3/17/2021 8:54:20,Oreste Abizera,Hash User Model password,This code uses bcrypt to hash password if it is modified before saving it in the database,Both,Backend,JavaScript,"const bcrypt=require(""bcryptjs"");
+//Encrypt password using bcrypt
+/*This code is dependent on {UserSchema} and has to be put in the same file with the Schema.*/
+UserSchema.pre(""save"", async function(next){
+if(!this.isModified(""password"")){
+next();
+}
+const salt = await bcrypt.genSalt(10);
+this.password = await bcrypt.hash(this.password,salt);
+})",,,,,,39,3/17/2021 8:56:33,Oreste Abizera,Sign jwt token,"This code is for generating Json Web Token with a secret key and setting expiration date.
+It uses jsonwebtoken module.",Both,Backend,JavaScript,"const jwt = require(""jsonwebtoken"");
+//signJwt
+/*This code is dependent on {UserSchema} and has to be put in the same file with the Schema.
+Remember to set JWT_SECRET and JWT_EXPIRE environment variables!
+*/
+UserSchema.methods.getSignedJwtToken = function(){
+return jwt.sign({id:this._id,},process.env.JWT_SECRET,{expiresIn:process.env.JWT_EXPIRE,});
+};",,,,,,40,3/17/2021 8:59:22,Oreste Abizera,Compare passwords,"This code compares password entered and the encrypted password in the database.
+It uses bcrypt module.
+It completely depends on User schema.",Both,Backend,JavaScript,"const bcrypt = require(""bcryptjs"");
+
+//match passwords
+/*
+This code compares password entered and the encrypted password in the database.
+This code is dependent on {UserSchema} and has to be put in the same file with the Schema.
+*/
+UserSchema.methods.comparePasswords = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+",,,,,,41,3/17/2021 9:00:34,Oreste Abizera,Login user controller,"This code is the controller for logging a user in with generating jwt token.
+It uses express-async-handler module to resolve asynchronous functions.
+",Both,Backend,JavaScript,"/*This code is dependent on file containing {UserSchema}.
+User model file has to be imported {UserModel}
+It depends on {comparePasswords} in UserModel and depends also on {getSignedJwtToken} in UserModel.
+It uses {sendTokenResponse} method.
+*/
+const asyncHandler = require(""express-async-handler"");
+const UserModel = require(""../models/User.model"");
+
+module.exports.loginUser = asyncHandler(async (req, res, next) => {
+  const { identifier, password } = req.body;
+
+  //check one option between phone and email
+  if (!identifier && !password) {
+    return res
+      .json({
+        success: false,
+        message: ""Enter Identifier and password"",
+      })
+
+  }
+  
+  let user;
+  user = await UserModel.findOne({ email: identifier }).select(""+password"");
+  if (!user) {
+    user = await UserModel.findOne({ phone: identifier }).select(""+password"");
+  }
+
+  if (user) {
+    if (!(await user.comparePasswords(password))) {
+      user = null;
+    }
+  }
+
+  if (!user) {
+    return res
+      .json({
+        success: false,
+        message: ""Invalid credentials"",
+      })
+
+  }
+  await sendTokenResponse(user, 200, res);
+});
+",,,,,,42,3/17/2021 9:01:35,Oreste Abizera,Register User controller,"This code is the controller for registering a user in the database.
+It checks if email or phone number is unique. 
+It uses express-async-handler module to resolve asynchronous functions.
+",Both,Backend,JavaScript,"/*This code is dependent on file containing {UserSchema}.
+User model file has to be imported {UserModel}
+It depends {getSignedJwtToken} in UserModel to generate json web token after registration. You can delete it if you want.
+It uses {sendTokenResponse} method.
+*/
+const asyncHandler = require(""express-async-handler"");
+const UserModel = require(""../models/User.model"");
+
+module.exports.registerUser = asyncHandler(async (req, res, next) => {
+  let userData = ({ names, email, password, phone } = req.body);
+
+  //check one option between phone and email
+  if (!userData.phone && !userData.email) {
+    return res
+      .json({
+        success: false,
+        message: ""Please provide email or phone number"",
+      })
+
+  }
+  // check uniqueness of email and phone
+  if (userData.email && (await UserModel.findOne({ email: userData.email }))) {
+    return res
+      .json({
+        success: false,
+        message: ""User with this email already exists "",
+      })
+  }
+
+  if (userData.phone && (await UserModel.findOne({ phone: userData.phone }))) {
+    return res
+      .json({
+        success: false,
+        message: ""User with same phone Number exists"",
+      })
+
+  }
+
+  const newUser = await UserModel.create(userData);
+  if (newUser) {
+  await sendTokenResponse(newUser, 200, res);
+  } else {
+return res.json({
+        success: false,
+        message: ""Registration failed"",
+      })
+  }
+});
+",,,,,,43,3/17/2021 9:02:29,Oreste Abizera,Send token response,"This code is used for sending request including json web token. Instead of every time writing response including token, this code helps to reuse them and we pass it user, statusCode and response.",Both,Backend,JavaScript,"//send token response
+/*
+This method depends on {getSignedJwtToken} method in {UserModel}
+*/
+const sendTokenResponse = asyncHandler(async (user, statusCode, res) => {
+  const token = user.getSignedJwtToken();
+  res.status(statusCode).json({
+    success: true,
+    token,
+    data: user,
+  });
+});
+",,,,,,44,3/17/2021 9:03:43,Oreste Abizera,Update User Controller,"This code is for updating some user details. 
+It uses express-async-handler module to resolve asynchronous functions.
+",Both,Backend,JavaScript,"//Update user profile
+/*
+This code depends on {UserModel} and uses express-async-handler module
+*/
+const asyncHandler = require(""express-async-handler"");
+const UserModel = require(""../models/User.model"");
+
+module.exports.updateUser = asyncHandler(async (req, res, next) => {
+  const userData = ({ names, email, phone } = req.body);
+  if (!userData.names && !userData.email && !userData.phone) {
+  return res.json({
+    success: false,
+    message: ""no new info provided""
+  });
+  }
+
+  let updateduser = await UserModel.findByIdAndUpdate(req.user._id, userData, {
+    new: true,
+    runValidators: true,
+  });
+  if (!updateduser) {
+    return res.json({
+    success: false,
+    message: ""Error occured""
+  });
+
+  }
+  res.json({
+    success: true,
+    data: updateduser,
+  });
+});
+",,,,,,45,3/17/2021 9:04:48,Oreste Abizera,User Routes,"This code shows well how to use routes.
+It uses controllers to provide the functionality on every.
+It totally depends on methods in UserController
+",Both,Backend,JavaScript,"//User Routes
+/*
+This code depends on {UserController}. Exported functions in UserController are the ones which are used to provide the functionality on the routes. It also depends on {protect} middleware.
+*/
+
+const express = require(""express"");
+const {
+  registerUser,
+  loginUser,
+  updateUser,
+} = require(""../controllers/UserController"");
+const { protect } = require(""../middlewares/Auth"");
+const Router = express.Router();
+
+Router.post(""/register"", registerUser);
+Router.post(""/login"", loginUser);
+Router.put(""/update"", protect, updateUser);
+
+module.exports = Router;
+",,,,,,46,3/17/2021 9:06:31,Oreste Abizera,Check if User is Authenticated,"This code is a middleware which checks if the user is logged in. This prevents the user from accessing some private services when he/she is not logged in.
+It depends on UserModel.
+It uses jsonwebtoken and express-asyn-handler modules.
+",Both,Backend,JavaScript,"const jwt = require(""jsonwebtoken"");
+const asyncHandler = require(""express-async-handler"");
+const UserModel = require(""../models/User.model"");
+//Protect Routes
+/*
+This code depends on {UserModel}.
+It uses express-async-handler and jsonwebtoken modules.
+Here we are receiving tokens in a format of “Bearer token”
+*/
+
+//protect routes
+exports.protect = asyncHandler(async (req, res, next) => {
+  let token;
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith(""Bearer"")
+  ) {
+    token = req.headers.authorization.split("" "")[1];
+  }
+
+  if (!token) {
+    return res.json({
+      success: false,
+      message: ""Unauthorized""
+    })
+
+  
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    console.log(decoded);
+    if (!decoded.id) {
+     return res.json({
+      success: false,
+      message: ""Unauthorized""
+    })
+
+    }
+    req.user = await UserModel.findById(decoded.id);
+    if (!req.user._id) {
+      return res.json({
+      success: false,
+      message: ""Unauthorized""
+    })
+    }
+    next();
+  } catch (error) {
+      return res.json({
+      success: false,
+      message: ""Unauthorized""
+    })
+  }
+});
+
+",,,,,,47,3/17/2021 15:18:17,Kwizera Emmanuel,Error handling class,a class that will handle all errors from apis that's the main functionarity,Mobile App,Backend,JavaScript,"/*
+For this error handler class to work we need this middleware to give the right error message and status code
+*/
+
+class ErrorResponse extends Error{
+    constructor(message,statusCode){
+        super(message);
+        this.message = message;
+        this.statusCode = statusCode;
+    }
+}
+
+module.exports = ErrorResponse;",,,,,,48,3/17/2021 15:21:39,Kwizera Emmanuel,Error Handler middle-ware,this is a function middleware mainly done to help getting error messages from different errors returned from api calling to use it you need to have and import error handler class,Mobile App,Backend,JavaScript,"/*
+For the error handler class to work we need this middleware to give the right error message and status code
+*/
+
+const ErrorHandler = (err,req,res,next)=>{
+    let error = err;
+    if(err.name == ""CastError""){
+        error = new ErrorResponse(""USER NOT FOUND"",404)
+    }
+    res.send({
+        statusCode: error.statusCode || 500,
+        error: error.message || ""Server error""
+    })
+}
+
+module.exports  = ErrorHandler;",,,,,,49,3/17/2021 15:29:05,Kwizera Emmanuel,User management schema,This is a schema used to create a user management module in order to store a new user you might need this schema,Mobile App,Backend,JavaScript,"/*
+A user management module used to store users, for this to be used you have to install mongoose module from npm
+*/
+
+const UserSchema = new mongoose.Schema({
+    firstname: {
+      type:String,
+      required:[true,""Firstname is required""],
+      minlength:[3,""Firstname must be at least 3 letters ""],
+      maxlength:[255,""Firstname must not exceed 255 letters""],
+      trim:true
+    },
+    lastname:{
+      type:String,
+      required: [true,""Lastname is required""],
+      minlength:[3,""Lastname must be at least 3 letters ""],
+      maxlength:[255,""Lastname must not exceed 255 letters""],
+      trim:true
+    },
+    
+    status: {
+      type: String,
+      maxlength: [255, ""status must not be more than 255 characters""],
+      trim: true,
+      enum: [""ACTIVE"", ""INACTIVE""],
+      default: ""ACTIVE"",
+    },
+    email: {
+      type: String,
+      required: [true, ""please add an email""],
+      match: [
+        /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
+        ""Please add a valid email"",
+      ],
+      unique: [true, ""email already taken""],
+    },
+
+    gender:{
+      type:String,
+      trim: true,
+      required:true,
+      enum:[""MALE"",""FEMALE""],
+        
+    },
+
+    password: {
+      type: String,
+      minlength: [6, ""Password must be at least 6 characters long""],
+      maxlength: [255, ""password must not be more than 255 characters""],
+      required: [true, ""Please add a password""],
+      select: false,
+    }
+  },
+    {
+
+      timestamps:{
+        createdAt:""Registered_at"",
+        updatedAt:""Updated_at""
+      },
+      toJSON:{
+        virtuals:true
+      },
+      toObject:{
+        virtuals:true
+      }
+    }
+);
+module.exports = mongoose.model(""User"",UserSchema);",,,,,,50,3/17/2021 15:31:59,Kwizera Emmanuel,Create a new user,The main function of this code is to create a new user in the database and activate his/her account ,Mobile App,Backend,JavaScript,"// USER REGISTRATION IN: MONGO DB
+
+/* 
+The newUser api which helps to save data into the database is
+totally dependent on the {ErrorResponse} class to handle catch eros 
+and {asyncHandler} from npm module express-async-handler
+inside this api
+*/ 
+
+module.exports.addUser = asyncHandler(async(req,res,next) => {
+    let {firstname,lastname,gender,email,password} = req.body;
+    if(await UserModel.findOne({email:email})){return next(new ErrorMessage(""Email already registered on the app"",400));}
+    const newUser = await UserModel.create({firstname,lastname,gender,email,password});
+    if(newUser){res.send({success:true,data:newUser}).status(200);} else return next(new ErrorMessage(""Something Went wrong during user creation"",400));
+})",,,,,,51,3/17/2021 15:38:44,Kwizera Emmanuel,Get one user by id,This is a function that is mainly designed to get a specific user by his/her id ,Mobile App,Backend,JavaScript,"// GET USER BY ID FROM: mongodb
+
+/* 
+The getUserById api which helps to get data of the user by pased id from the database is
+totally dependent on the {ErrorResponse} class to handle catch eros 
+and {asyncHandler} from npm module express-async-handler
+inside this api
+*/ 
+
+module.exports.getUserById = asyncHandler(async(req,res,next) => {
+    let user_id = req.params.id;
+    let user = await UserModel.findById(user_id);
+    if(user){res.send({success:true,data:user}).status(201);} else return next(new ErrorMessage(""USER NOT FOUND"",404));
+})",,,,,,52,3/17/2021 15:41:32,kwizera Emmanuel,GET ALL USERS,The function is designed to get all stored users in the database when the API is called,Mobile App,Backend,JavaScript,"// GET ALL USERS
+
+/* 
+The getUserById api which helps to get data of all users from the database is
+totally dependent on the {ErrorResponse} class to handle catch eros 
+and {asyncHandler} from npm module express-async-handler
+inside this api
+*/ 
+
+module.exports.getUsers = asyncHandler(async(req,res,next) => {
+    let users = await UserModel.find();
+    if(users){res.send({success:true,data:users}).status(201);} else return next(new ErrorMessage(""Users not found"",404));
+})
+",,,,,,53,3/17/2021 15:46:28,kwizera Emmanuel,GET ALL USERS,The function is designed to get all stored users in the database when the API is called,Mobile App,Backend,JavaScript,"// GET ALL USERS
+
+/* 
+The getUsers api which helps to get data of all users from the database is
+totally dependent on the {ErrorResponse} class to handle catch eros 
+and {asyncHandler} from npm module express-async-handler
+inside this api
+*/ 
+
+module.exports.getUsers = asyncHandler(async(req,res,next) => {
+    let users = await UserModel.find();
+    if(users){res.send({success:true,data:users}).status(201);} else return next(new ErrorMessage(""Users not found"",404));
+})
+",,,,,,54,3/17/2021 15:48:50,Kwizera Emmanuel,Update user information,the function is used to update some information that was corrected in user creation if something went wrong there and If something new added this function can be used,Mobile App,Backend,JavaScript,"// UPDEATE A USER
+
+/* 
+The updateUser api which helps to update data of user by given id from the database is
+totally dependent on the {ErrorResponse} class to handle catch eros 
+and {asyncHandler} from npm module express-async-handler
+inside this api
+*/ 
+
+module.exports.updateUser = asyncHandler(async(req,res,next) => {
+    let user_id = req.params.id;
+    const newUser = {...req.body};
+    let user = await UserModel.findByIdAndUpdate(user_id,newUser,{ new:true});
+    if(user){res.send({success:true,data:user}).status(201);}else return next(new ErrorMessage(""SOMETHING WENT WRONG WHILE UPDATING USER"",400));
+})",,,,,,55,3/17/2021 15:52:49,Kwizera Emmanuel,DEACTIVATE THE ACCOUNT AND ACTIVATE,A function used when user who registered on the app wants to deactivate an account or if a user requests to re  activate account from administration,Mobile App,Backend,JavaScript,"// DEACTIVATE THE ACCOUNT AND ACTIVATE
+
+/* 
+The actionOnAccount api which helps to update status of user by given id from the database is
+totally dependent on the {ErrorResponse} class to handle catch eros 
+and {asyncHandler} from npm module express-async-handler
+inside this api
+*/ 
+
+module.exports.actionOnAccount = asyncHandler(async(req,res,next) => {
+    let theUser = await UserModel.findById(req.params.id);
+    let action = theUser.status == ""ACTIVE"" ? {status:""INACTIVE""} : {status:""ACTIVE""};
+    let user = await UserModel.findByIdAndUpdate(req.params.id,action,{new:true});
+    if(user){res.send({success:true,data:user }).status(201);}else return next(new ErrorMessage(""Action [ACTIVE / INACTIVE] failed"",400));
+})",,,,,,56,3/17/2021 16:00:25,Kwizera Emmanuel,DELETE USR PARMANENTLY,A function that can be user in the situation we need delete user from the database and remove his account permanently,Mobile App,Backend,JavaScript,"// DELETE USR PARMANENTLY
+
+/* 
+The deleteUser api which helps to delete status of user by given id from the database is
+totally dependent on the {ErrorResponse} class to handle catch eros 
+and {asyncHandler} from npm module express-async-handler
+inside this api
+*/ 
+
+module.exports.deleteUser = asyncHandler(async(req,res,next)=>{
+    let user = await UserModel.findByIdAndDelete(req.params.id);
+    if(user){res.send({success:true,data:user}).status(201)} else return next(new ErrorMessage(""User deletion failed"",400));     
+})",,,,,,57,3/17/2021 21:00:52,Blessing Hirwa,Toggle like function(update),A function to update the state of the liked product,Mobile App,Frontend,React Native,"// This function is used to update the like state. By default it's false and when the product is clicked it'll change the value and set it to the new value which will be the inverse of the previous one. i.e if it starts being false and it gets clicked it will change the value to true and vice versa
+const toggleLike = () => setLiked(!liked);",,,,,,58,3/17/2021 21:07:41,Blessing Hirwa,Double tap component,"This is a custom component that will used the toggleLike function to perform the ""like"" functionality on double tap event.",Mobile App,Frontend,React Native,"// This a component that will take toggleLike (find toggleLike function/snippet), delay as props and the update toggle the toggleLike function 
+export default function DoubleTap(props) {
+    const defaultProps = {
+      delay: 300,
+      //onDoubleTap is the passed function called toggleLike
+      onDoubleTap: () => null,
+    };
+  
+    let lastTap = null;
+    const handleDoubleTap = () => {
+      const now = Date.now();
+      if (lastTap && now - lastTap < (props.delay || defaultProps.delay)) {
+        props.onDoubleTap() || defaultProps.onDoubleTap();
+      } else {
+        lastTap = now;
+      }
+    };
+  
+    return (
+      <TouchableWithoutFeedback onPress={handleDoubleTap}>
+        {props.children}
+      </TouchableWithoutFeedback>
+    );
+  }",,,,,,59,3/20/2021 10:52:43,Kwizera Emmanuel,DELETE USR PARMANENTLY,A function that can be user in the situation we need delete user from the database and remove his account permanently,Both,Backend,JavaScript,"// DELETE USR PARMANENTLY
+
+/* 
+The deleteUser api which helps to delete status of user by given id from the database is
+totally dependent on the {ErrorResponse} class to handle catch eros 
+and {asyncHandler} from npm module express-async-handler
+inside this api
+*/ 
+
+module.exports.deleteUser = asyncHandler(async(req,res,next)=>{
+    let user = await UserModel.findByIdAndDelete(req.params.id);
+    if(user){res.send({success:true,data:user}).status(201)} else return next(new ErrorMessage(""User deletion failed"",400));     
+})",,,,,,60,3/20/2021 23:37:36,Cedric Izabayo,Nodejs Mongoose database connection,"This function helps in connecting to a mongodb database.
+To use this function first paste  these codes in a file, then define the MONGO_URL in environment variables and finally require that file where you need database connection.",Both,Backend,JavaScript,"const mongoose = require(""mongoose"");
+
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URL, {
+            useUnifiedTopology: true,
+            useNewUrlParser: true,
+            useFindAndModify: false,
+        });
+        console.log(""MongoDB is Connected..."");
+    } catch (err) {
+        console.error(err);
+        process.exit(1);
+    }
+};
+
+connectDB();
+",,,,,,61,3/20/2021 23:44:26,Kellia Umuhire,Schema for users.,"This is the general structure or schema of the user's document.
+To use it, paste the code in a new file and import the User model like UserModel  where you want to use it.",Both,Backend,JavaScript,"const mongoose = require('mongoose');
+
+let user_schema = new mongoose.Schema({
+    sur_name: {
+        type: String,
+        min: 2,
+        max: 1100,
+        required: true
+    },
+    other_names: {
+        type: String,
+        min: 2,
+        max: 1100,
+        required: true
+    },
+    user_name: {
+        type: String,
+        min: 5,
+        max: 50,
+        required: true
+    },
+    password: {
+        type: String,
+        required: true
+    },
+    email: {
+        type: String
+    },
+    gender: {
+        type: String,
+        enum: ['male', 'female'],
+        required: true
+    },
+    status: {
+        type: String,
+        default: 'ACTIVE',
+        enum: ['ACTIVE', 'INACTIVE']
+    }
+}, { timestamps: true });
+
+// create users model
+exports.UserModel = mongoose.model('user', user_schema);",,,,,,62,3/20/2021 23:46:10,Cedric Izabayo,Nodejs Hash password,"These codes are used for encrypting passwords for more security and privacy.
+To use this function paste it in a file then import it in your code, and call that function passing the password you want to encrypt in it",Both,Backend,JavaScript,"
+/**
+ *  Encrypt password
+ * @param {String} password 
+ */
+exports.hashPassword = async (password) => {
+    const salt = await bcrypt.genSalt(10)
+    const hashed = await bcrypt.hash(password, salt)
+    return hashed;
+}",,,,,,63,3/20/2021 23:48:34,Cedric Izabayo,Strong password regex,"This is a regex expression for validating passwords so that users can use strong passwords, which can't be easily guessed.
+To use it you can paste these codes in a file then import the PasswordRegex.",Both,Backend,JavaScript,"exports.PasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/",,,,,,64,3/20/2021 23:52:37,Cedric Izabayo,Function to validate ObjectId,"This function is used to tell whether the given string is objectId or not, it will help to prevent errors that may arise while perfoming actions in mongoose where id is needed.
+To use this function paste these codes in a file then import this function.",Both,Backend,JavaScript, exports.validateObjectId = (id) => mongoose.Types.ObjectId.isValid(id);,,,,,,65,3/20/2021 23:58:05,Kellia Umuhire,User validation function,"This functions validates the user, following the user schema which is the UserModal also included in the data hub.  It will return the error if any, or empty - which is false, when there is no error.
+To use it, one needs to have a package called ""Joi"" installed and also have the PasswordRegex included in the project. The PasswordRegex is also included in the data hub.",Both,Backend,JavaScript,"// validate user
+exports.validateUser = (user, action = 'create') => {
+    const schema = action === 'create' ? Joi.object({
+        sur_name: Joi.string().min(3).required(),
+        other_names: Joi.string().min(3).required(),
+        user_name: Joi.string().min(5).max(50),
+        password: Joi.string().regex(PasswordRegex).required(),
+        email: Joi.string().email().required(),
+        gender: Joi.string().min(4).max(6).valid('male', 'female').required()
+    }) : Joi.object({
+        sur_name: Joi.string().min(3),
+        other_names: Joi.string().min(3),
+        user_name: Joi.string().min(5).max(50),
+        email: Joi.string().email(),
+        phone: Joi.string().min(10).max(20),
+        gender: Joi.string().min(4).max(6).valid('male', 'female'),
+    })
+    return schema.validate(user)
+}",,,,,,66,3/21/2021 0:12:02,Kellia Umuhire,Get random picture,"This function get random picture from the unsplash api.
+To use it, one needs to have unsplash-js installed, and also have an access key. A snippet of how to include the unsplash-js and instantiating it ,is also included in the data hub as unsplash instantiation.",Both,Backend,JavaScript,"//getting random picture
+getRandomPicture(req, res) {
+        unsplash.photos
+            .getRandom({})
+            .then((data) => {
+                res.status(200).send({ urls: data.response.urls })
+            })
+            .catch((err) => console.log(err));
+    }",,,,,,67,3/21/2021 0:13:30,Cedric Izabayo,Format Result,"This method will be used to format the response you send to each request where three parameters are given status, message and data. To use this method paste these codes in a file then import this function",Both,Backend,JavaScript,"exports.formatResult = ({status = 200, message = 'OK', data}) => {
+    return {
+        status: status,
+        message: message.toString().split('\""').join(''),
+        data: data
+    }
+}",,,,,,68,3/21/2021 0:15:44,Cedric Izabayo,checkEmailExistance controller,"These codes are used to check if the given email is already taken or not.
+To use this controller paste it in a file then import it in your routes.",Both,Backend,JavaScript,"exports.checkEmailExistance = async (req, res) => {
+    try {
+        const user = await UserModel.findOne({ email: req.params.email, status: 'ACTIVE' });
+        if (user) return res.send(formatResult({ status: 200, message: 'Email Already Taken', data: { exists: true } }));
+        return res.send(formatResult({ status: 200, message: 'Email Available', data: { exists: false } }));
+    } catch (err) {
+        return res.send(formatResult({ status: 500, message: err }));
+    }
+};
+",,,,,,69,3/21/2021 0:19:14,Kellia Umuhire,Importing and instantiating unsplash-js,"This snippet is for importing unsplash-js and instantiating it. One needs to have unsplash-js installed and also get an access_key from unsplash.com/developers, by creating an account as a developer. You need to  include the access_key in environment variables as ACCESS_KEY.",Both,Backend,JavaScript,"//snippet for using unsplash-js
+import { createApi } from 'unsplash-js';
+
+const unsplash = new createApi({
+    accessKey: process.env.ACCESS_KEY,
+});
+",,,,,,70,3/21/2021 0:19:30,Cedric Izabayo,checkEmailExistance controller,"These codes are used to check if the given email is already taken or not.
+To use this controller paste it in a file then import it in your routes.",Both,Backend,JavaScript,"exports.checkEmailExistance = async (req, res) => {
+    try {
+        const user = await UserModel.findOne({ email: req.params.email, status: 'ACTIVE' });
+        if (user) return res.send(formatResult({ status: 200, message: 'Email Already Taken', data: { exists: true } }));
+        return res.send(formatResult({ status: 200, message: 'Email Available', data: { exists: false } }));
+    } catch (err) {
+        return res.send(formatResult({ status: 500, message: err }));
+    }
+};
+",,,,,,71,3/21/2021 0:20:05,Cedric Izabayo,checkUsernameExistence,"These codes are used to check if the given username is already taken or not.
+To use this controller paste it in a file then import it in your routes. ",Both,Backend,JavaScript,"exports.checkUsernameExistence = async (req, res) => {
+    try {
+        const user = await UserModel.findOne({ user_name: req.params.user_name, status: 'ACTIVE' });
+        if (user) return res.send(formatResult({ status: 200, message: 'Username Already Taken', data: { exists: true } }));
+        return res.send(formatResult({ status: 200, message: 'Username Available', data: { exists: false } }));
+    } catch (err) {
+        return res.send(formatResult({ status: 500, message: err }));
+    }
+};",,,,,,72,3/21/2021 0:21:37,Cedric Izabayo,Get User by Id,These codes are used to get a user by id. To use this controller paste it in a file then import it in your routes.,Both,Backend,JavaScript,"exports.getUserById = async (req, res) => {
+    try {
+        if (!validateObjectId(req.params.id))
+            return res.send(formatResult({ status: 400, message: 'Invalid id' }))
+
+        const user = await UserModel.findById(req.params.id);
+        if (!user)
+            return res.send(formatResult({ status: 404, message: 'User not found' }));
+
+        return res.send(formatResult({ status: 200, data: user }));
+
+    } catch (e) {
+        return res.send(formatResult({ status: 500, message: e }))
+    }
+}",,,,,,73,3/21/2021 0:22:05,Kellia Umuhire,Search image using unsplash api.,"This function is for getting the searching an image. We're referring to the search term as the tag in this case. To use it, one needs to have unsplash-js installed and also instantiated.
+A snippet of how to instantiate it is also included in the data hub. ",Both,Backend,JavaScript,"//search an image
+exports.getImageByTag = (req, res) => {
+        unsplash.search
+            .getPhotos({
+                query: req.params.tag,
+                page: 1,
+                perPage: 10,
+            })
+            .then((data) => {
+                res.status(200).send({ urls: data.response.results[0].urls })
+            })
+            .catch((err) => console.log(err));
+    }",,,,,,74,3/21/2021 0:25:24,Cedric Izabayo,Create User controller,"These codes are used to create a new User.
+To use this controller paste it in a file then import it in your routes.
+Remember to import UserModel, validate_user, hashPassword and formatResult functions",Both,Backend,JavaScript,"exports.createUser = async (req, res) => {
+    try {
+        const { error } = validateUser(req.body);
+        if (error) return res.send(formatResult({ status: 400, message: error.details[0].message }));
+
+        let { email, user_name } = req.body
+
+        let user = await UserModel.findOne({
+            $or: [{
+                email: email ? email : ''
+            }, {
+                user_name: user_name ? user_name : ''
+            }],
+        })
+
+        if (user) {
+            const emailFound = email == user.email
+            return res.send(formatResult({ status: 400, message: `User with same ${emailFound ? 'email ' : 'user_name'} arleady exist`)))
+        }
+
+        req.body.password = await hashPassword(req.body.password);
+
+        const newUser = new UserModel(req.body);
+
+        const result = await newUser.save();
+
+        return res.send(formatResult({ status: 201, message: 'CREATED', data: result }));
+    } catch
+    (e) {
+        return res.send(formatResult({ status: 500, message: e }))
+    }
+}",,,,,,75,3/21/2021 0:27:18,Kellia Umuhire,Function to validate the user before login.,"This function is for validating the user, checking the provided email and password. To use it, one needs to import it. It can be saved inside the the User schema, which is the User model.
+One can also manipulate it and set desired properties, like for example if you want the email length to be at least 8 instead of 5.",Both,Backend,JavaScript,"//validate user login
+exports.validateUserLogin = (data) => {
+    const schema = Joi.object({
+        email_user_name: Joi.string().min(5).required(),
+        password: Joi.string().required(),
+    })
+    return schema.validate(data)
+}",,,,,,76,3/21/2021 0:27:33,Cedric Izabayo,User login controller,"These codes are used to handle user login.
+To use this controller paste it in a file then import it in your routes.
+Remember to import UserModel, formatResult, validateUserLogin and import Compare from Bcrypt",Both,Backend,JavaScript,"exports.userLogin = async (req, res) => {
+    try {
+        const { error } = , validateUserLogin(req.body);
+        if (error) return res.send(formatResult({ status: 400, message: error.details[0].message }));
+
+        const user = await UserModel.findOne({
+            $or: [{
+                email: req.body.email_user_name
+            }, {
+                user_name: req.body.email_user_name
+            }]
+        });
+        if (!user) return res.send(formatResult({ status: 404, message: 'Invalid credentials' }));
+
+        const validPassword = await compare(req.body.password, user.password);
+        if (!validPassword) return res.send(formatResult({ status: 404, message: 'Invalid credentials' }));
+        return res.status(200).send(formatResult({ status: 200, message: 'OK', data: await user.generateAuthToken() }));
+
+    } catch (e) {
+        return res.send(formatResult({ status: 500, message: e }))
+    }
+}",,,,,,77,3/21/2021 0:30:13,Cedric Izabayo,Update user controller,"These codes are used to update user.
+To use this controller paste it in a file then import it in your routes.
+Remember importing UserModel, formatResult, and validateUser.",Both,Backend,JavaScript,"exports.updateUser = async (req, res) => {
+    try {
+
+        const { error } = validateUser(req.body, 'update');
+        if (error) return res.send(formatResult({ status: 400, message: error.details[0].message }));
+
+        let { email, national_id, phone, category, user_name } = req.body
+
+        let dupplicate_user = await UserModel.findOne({
+            _id: {
+                $ne: req.user._id
+            },
+            $or: [{
+                email: email
+            }, {
+                user_name: user_name
+            }],
+        })
+
+        if (dupplicate_user) {
+            const emailFound = email == user.email
+            return res.send(formatResult({ status: 400, message: `User with same ${emailFound ? 'email ' : 'user_name'} arleady exist` }))
+        }
+
+        const result = await UserModel.findOneAndUpdate({ _id: req.user._id }, req.body, { new: true });
+
+        return res.send(formatResult({ status: 200, message: 'UPDATED', data: result }));
+    } catch
+    (e) {
+        return res.send(formatResult({ status: 500, message: e }))
+    }
+}",,,,,,78,3/21/2021 0:31:34,Cedric Izabayo,Update user password,"These codes are used to udpate user Password.
+To use this controller paste it in a file then import it in your routes.
+Remember importing UserModel, formatResult and validateUserPasswordUpdate",Both,Backend,JavaScript,"exports.updateUserPassword = async (req, res) => {
+    try {
+
+        const { error } = validateUserPasswordUpdate(req.body);
+        if (error) return res.send(formatResult({ status: 400, message: error.details[0].message }));
+
+        const user = await UserModel.findById(req.user._id);
+        if (!user) return res.send(formatResult({ status: 404, message: 'User not found' }));
+
+        const validPassword = await compare(req.body.current_password, user.password);
+        if (!validPassword) return res.send(formatResult({ status: 400, message: 'Invalid password' }));
+
+        const hashedPassword = await hashPassword(req.body.new_password);
+        user.password = hashedPassword
+        const updated = await user.save();
+
+        return res.send(formatResult({ status: 201, message: ""UPDATED"", data: updated }));
+
+    } catch (err) {
+        return res.send(formatResult({ status: 500, message: err }));
+    }
+};
+",,,,,,79,3/21/2021 0:33:12,Cedric Izabayo,Delete User Controller,"These codes are used to delete user.
+To use this controller paste it in a file then import it in your routes.
+Remember importing UserModel and formatResult.",Both,Backend,JavaScript,"exports.deleteUser = async (req, res) => {
+    try {
+
+        const result = await UserModel.findOneAndDelete({ _id: req.user._id });
+        if (!result)
+            return res.send(formatResult({ status: 404, message: 'User not found' }));
+
+        return res.send(formatResult({ status: 200, message: 'DELETED' }));
+    } catch
+    (e) {
+        return res.send(formatResult({ status: 500, message: e }))
+    }
+}
+",,,,,,80,3/21/2021 0:33:22,Kellia Umuhire,Function to validate the password before updating it.,"This function is for validating the current_password and new_password before updating the current_password with the new_password. One needs Joi installed to use it. 
+The function can be saved in the User modal, as an independent function.
+To use it, one needs to import it where they need to validate the passwords, before updating.",Both,Backend,JavaScript,"//validate password before updating it
+exports.validateUserPasswordUpdate = (data) => {
+    const schema = Joi.object({
+        current_password: Joi.string().regex(PasswordRegex).required(),
+        new_password: Joi.string().regex(PasswordRegex).required(),
+    })
+    return schema.validate(data)
+}
+",,,,,,81,3/27/2021 16:38:48,Gervais Ishimwe,validateUser,This is the function which takes the user model as argument and validates all fields using joi accordingly. This function returns the validated user model. ,Mobile App,Backend,JavaScript,"const validateUser = (user) => {
+  const joiSchema = Joi.object({
+    fullName: Joi.string().min(3).max(50).required(),
+    email: Joi.string().required(),
+    phoneNumber: Joi.string().required().min(10).max(10),
+    password: Joi.string().min(6).max(40).required(),
+    userRole: Joi.objectId().required(),
+  });
+
+  return joiSchema.validate(user);
+};",,,,,,82,3/27/2021 16:41:18,Gervais Ishimwe,signup,This is the function which receives the user data and create account. This function depends on the validateUser() function. ,Mobile App,Backend,JavaScript,"exports.signup = async (req, res) => {
+  const { error } = validateUser(req.body);
+  if (error) return res.status(400).send(error);
+
+  const user = new User({
+    fullName: req.body.fullName,
+    email: req.body.email,
+    password: bcrypt.hashSync(req.body.password, 8),
+    userRole: req.body.userRole,
+  });
+  await user
+    .save()
+    .then(() => {
+      return res
+        .status(201)
+        .send({ message: ""User was registered successfully!"" });
+    })
+    .catch((err) => {
+      return res.status(500).send({ message: err });
+    });
+};",,,,,,83,3/27/2021 17:06:04,Blessing Hirwa,create User schema model (updated),"-Add reference to ""roles"" table on User schema 
+-Remove ""any"" keyword on exporting the User Schema. 
+-Rename also ""users"" to ""user"" to keep the good practice of Mongoose that a model name must be in singular because be default Mongoose will add ""s"" for you.",Both,Backend,JavaScript,"const dates = new Date()
+
+const userSchema = new mongoose.Schema({
+  name: String,
+  user_id: { type: String, default: uuidv4() },
+  company_id: { type: String, default: dates.getTime() },
+  company: Object,
+  company_slug: Object,
+  role: { type: Number, default: 1, ref: ""Roles"" },
+  password: String,
+  username: String,
+  account: Object,
+  seller_id: String,
+  email: String,
+  registered: { type: Date, default: Date.now },
+  type: String,
+  profile: {
+    imageAddress: String,
+    info: Object
+  }
+})
+
+const User = mongoose.model(""user"", userSchema)",,,,,,84,3/27/2021 20:41:26,Gervais Ishimwe,signup,This is the function which receives the user data and create account. This function depends on the validateUser() function. ,Mobile App,Backend,JavaScript,"exports.signup = async (req, res) => {
+  const { error } = validateUser(req.body);
+  if (error) return res.status(400).send(error);
+
+  const user = new User({
+    fullName: req.body.fullName,
+    email: req.body.email,
+    password: bcrypt.hashSync(req.body.password, 8),
+    userRole: req.body.userRole,
+  });
+  await user
+    .save()
+    .then(() => {
+      return res
+        .status(201)
+        .send({ message: ""User was registered successfully!"" });
+    })
+    .catch((err) => {
+      return res.status(500).send({ message: err });
+    });
+};",,,,,,85,3/28/2021 18:27:22, Cyebukayire Peace,Checking User Existence from the database while logging in,"The codes below should be used while checking user existence in the database after the user submits his/her logging-in information.
+her is an example of the HTML form :
+ <form class=""form"" method=""post"" action=""/login_validation"">
+                       <label>Username</label><br>
+                       <input type=""username"" class=""form-control"" name=""username""><br>
+
+                       <label>Password</label><br>
+                       <input type=""password"" class=""form-control"" name=""password""><br><br>
+                       <input type=""submit"" class=""btn btn-primary btn-lg form-control"" value=""Login"">
+                    </form>
+
+So for the user user to log in successfully, we need to first check if he/she exists at first. The codes below are written in Flask and can be used for user existence  verification.
+
+For the query part you can modify it and put there your own query.",Web App,Frontend,Flask,"@app.route('/login_validation', methods=['POST'])
+def login_validation():
+    username=request.form.get('username')
+    password=request.form.get('password')
+    cursor.execute(""SELECT * FROM `users` WHERE `username` LIKE '{}' AND `password` LIKE '{}'"".format(username,password))
+    users=cursor.fetchall()
+
+    if len(users)>0:
+        return ""User exists""
+    else:
+        return ""User does not exist""
+     
+",,,,,,86,3/28/2021 18:42:20,Cyebukayire Peace,Directing the user to a dashboard page after logging in successfully,"From the snippet I sent before, 
+there was a way to recognize if the user exists or not while trying to login.
+So, the codes below is to help you redirect the logged in user to a dashboard page and deny a fake user from going to the dashboard page.
+You can still modify the codes and add your own query and file names.",Web App,Frontend,Flask,"@app.route('/login_validation', methods=['POST'])
+def login_validation():
+    username=request.form.get('username')
+    password=request.form.get('password')
+    cursor.execute(""SELECT * FROM `users` WHERE `username` LIKE '{}' AND `password` LIKE '{}'"".format(username,password))
+    users=cursor.fetchall()
+
+    if len(users)>0:
+        return render_template(""dashboard.html"")
+    else:
+        return render_template(""login.html"")
+     
+",,,,,,87,3/28/2021 21:23:57,Cyebukayire Peace & Phelix Dusengimana,Inserting data in the database with Flask,"The codes below will help you with the insertion of form information in the database.
+In this case, the data to be inserted are from the User registration form below: 
+<form class=""form"" method=""post"" action=""/register_user"">
+
+                      <label>Username</label><br>
+                       <input class=""form-control"" name=""newUsername""><br>
+
+                       <label>Email</label><br>
+                       <input type=""email"" class=""form-control"" name=""newEmail""><br>
+
+                       <label>Password</label><br>
+                       <input type=""password"" class=""form-control"" name=""newPassword""><br><br>
+
+                       <input type=""submit"" class=""btn btn-primary btn-lg form-control"" value=""Register"">
+                    </form>
+When the submit button is pressed, the register user function is being invoked.
+the after registering the user successfully, the user will then be directed to the login page.
+
+Remember that you can always change the query I used and modify the codes in a way the works for you.",Web App,Frontend,Flask,"@app.route(""/register_user"", methods=['POST'])
+def register_user():
+    newUsername=request.form.get('newUsername')
+    newEmail=request.form.get('newEmail')
+    newPassword=request.form.get('newPassword')
+    cursor.execute(""INSERT INTO `users` (`username`, `email`, `password`) values ('{}', '{}', '{}')"".format(newUsername, newEmail, newPassword))
+    conn.commit()
+    return render_template(""login.html"")",,,,,,88,3/28/2021 20:35:14, Cyebukayire Peace & Phelix Dusengimana,Checking User Existence from the database while logging in,"The codes below should be used while checking user existence in the database after the user submits his/her logging-in information.
+her is an example of the HTML form :
+ <form class=""form"" method=""post"" action=""/login_validation"">
+                       <label>Username</label><br>
+                       <input type=""username"" class=""form-control"" name=""username""><br>
+
+                       <label>Password</label><br>
+                       <input type=""password"" class=""form-control"" name=""password""><br><br>
+                       <input type=""submit"" class=""btn btn-primary btn-lg form-control"" value=""Login"">
+                    </form>
+
+So for the user user to log in successfully, we need to first check if he/she exists at first. The codes below are written in Flask and can be used for user existence  verification.
+
+For the query part you can modify it and put there your own query.",Web App,Frontend,Flask,"@app.route('/login_validation', methods=['POST'])
+def login_validation():
+    username=request.form.get('username')
+    password=request.form.get('password')
+    cursor.execute(""SELECT * FROM `users` WHERE `username` LIKE '{}' AND `password` LIKE '{}'"".format(username,password))
+    users=cursor.fetchall()
+
+    if len(users)>0:
+        return ""User exists""
+    else:
+        return ""User does not exist""
+     
+",,,,,,89,3/28/2021 20:34:55,Cyebukayire Peace,Directing the user to a dashboard page after logging in successfully,"From the snippet I sent before, 
+there was a way to recognize if the user exists or not while trying to login.
+So, the codes below is to help you redirect the logged in user to a dashboard page and deny a fake user from going to the dashboard page.
+You can still modify the codes and add your own query and file names.",Web App,Frontend,Flask,"@app.route('/login_validation', methods=['POST'])
+def login_validation():
+    username=request.form.get('username')
+    password=request.form.get('password')
+    cursor.execute(""SELECT * FROM `users` WHERE `username` LIKE '{}' AND `password` LIKE '{}'"".format(username,password))
+    users=cursor.fetchall()
+
+    if len(users)>0:
+        return render_template(""dashboard.html"")
+    else:
+        return render_template(""login.html"")
+     
+",,,,,,90,3/28/2021 21:23:27, Cyebukayire Peace & Phelix Dusengimana,Checking User Existence from the database while logging in,"The codes below should be used while checking user existence in the database after the user submits his/her logging-in information.
+her is an example of the HTML form :
+ <form class=""form"" method=""post"" action=""/login_validation"">
+                       <label>Username</label><br>
+                       <input type=""username"" class=""form-control"" name=""username""><br>
+
+                       <label>Password</label><br>
+                       <input type=""password"" class=""form-control"" name=""password""><br><br>
+                       <input type=""submit"" class=""btn btn-primary btn-lg form-control"" value=""Login"">
+                    </form>
+
+So for the user user to log in successfully, we need to first check if he/she exists at first. The codes below are written in Flask and can be used for user existence  verification.
+
+For the query part you can modify it and put there your own query.",Web App,Frontend,Flask,"@app.route('/login_validation', methods=['POST'])
+def login_validation():
+    username=request.form.get('username')
+    password=request.form.get('password')
+    cursor.execute(""SELECT * FROM `users` WHERE `username` LIKE '{}' AND `password` LIKE '{}'"".format(username,password))
+    users=cursor.fetchall()
+
+    if len(users)>0:
+        return ""User exists""
+    else:
+        return ""User does not exist""
+     
+",,,,,,91,3/28/2021 21:19:03,Cyebukayire Peace & Phelix Dusengimana,Logging out using Flask,"The code snippet below will be used to log out the current user who signed into the system.
+it may depend on how you named your session but in my case, the session name is user_id.
+
+When the user logs in, I say this:
+        session['user_id']=users[0][0]
+so, it means when I try to log out, I the system will do  this:
+       session.pop(""user_id"")
+The codes below is a simple route to do this job.
+",Web App,Frontend,Flask,"@app.route(""/logout"")
+def logout():
+    session.pop('your session_name')
+    return redirect('/')
+",,,,,,92,3/28/2021 21:33:11,Cyebukayire Peace & Phelix Dusengimana,Checking if the user is logged in or not,"This code is for restricting the non-logged-In user from accessing the some of the pages like the dashboard.
+As we saw it in the previous snippet, when the user is logged in, we give session a value and when the user is logged out, the session is deleted.
+So, the codes below will just check if the session holds some data of the user and if yes,
+we allow the user to get access to the dashboard otherwise, we redirect the user to the login pages.
+Reminder: you can always modify the codes and use your own function and file names.",Web App,Frontend,Flask,"@app.route('/dashboard')
+def dashboard():
+    if 'user_id' in session:
+        return render_template('dashboard.html')
+    else:
+        return redirect('/login.html')",,,,,,93,4/6/2021 11:58:49,Cyebukayire Peace,Displaying the webcam on the browser,"The code snippets below will be used to display the webcam on the broswer.
+both camera.py and main.py are two different files but main.py depends on camera.py.
+you should have an index.html file in the template folder.
+To display the frames on the browser, we use <img> tab as follows:
+<img id=""img"" src = ""{{ url_for('video_feed') }}"">
+Run this code as follow:
+python main.py",Both,Frontend,Python and Opencv,"#camera.py
+import cv2
+class VideoStream(object):
+    def __init__(self):
+        self.video = cv2.VideoCapture(0)
+
+    def __del__(self):
+        self.video.release()
+
+    def get_frame(self):
+        success, image = self.video.read()
+        ret, jpeg = cv2.imencode('.jpg', frame1)
+        return jpeg.tobytes()
+
+#main.py
+from flask import Flask,render_template,request,redirect,session,Response
+from Camera import VideoStream
+def gen(camera):
+    while True:
+        frame = camera.get_frame()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(gen(VideoStream()),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/')
+def login():
+    return render_template('index.html')
+",,,,,,94,4/22/2021 19:49:48,Blessing Hirwa,Custom Text component,"This is a component which takes: text content, text color, text weight, text height, text size, its horizontal margin, its vertical margin and text white. If not passed then it'll use the default presets. After all of that it'll display text according to the given styles.",Mobile App,Frontend,React Native,"export default function CustomText({
+  textContent,
+  textColor,
+  textWeight,
+  textHeight,
+  textSize,
+  textMarginHorizontal,
+  textMarginVertical,
+  textWidth,
+}) {
+  const styles = StyleSheet.create({
+    text__customStyles: {
+      color: textColor,
+      fontWeight: textWeight,
+      lineHeight: textHeight,
+      fontSize: textSize,
+      marginHorizontal: textMarginHorizontal,
+      marginVertical: textMarginVertical,
+      width: textWidth,
+    },
+  });
+
+  return (
+    <View>
+      <Text style={styles.text__customStyles}>{textContent}</Text>
+    </View>
+  );
+}",,,,,,95,5/9/2021 17:37:03,- DUSENGIMANA FELIX -CYEBUKAYIRE Peace,Noification frotend,"This is the module for providing notification to the user from the database.
+It is designed using html and flask(Python framework).",Web App,Frontend,Python,"/*css*/  
+.icons{
+    font-size: 1.5em;
+  }
+  .dropdown{
+    position: relative;
+  }
+  .dropdown-trigger:focus + .dropdown-content{
+     display: block;
+  }
+  /* .dropdown-trigger:not(:focus)+ .dropdown-content{
+    display: none;
+  } */
+  .dropdown-content{
+    display: none;
+    position: absolute;
+    background-color: #fffffe;
+    left: 50%;
+    right: 50%;
+    transform: translate(-50%,-1%);
+    width: max-content;
+    top: 40px;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+  }
+  .dropdown-item{
+    cursor: pointer;
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+
+/* htms */  
+  <div class=""dropdown"">
+      <a class=""me-3 py-2 text-light text-decoration-none icons dropdown-trigger"" href=""#""><i class=""fa fa-bell""></i></a>
+      <div class=""dropdown-content"">
+         <div class=""dropdown-item"">
+            <h>Intruder dectected!</h>
+            <span>camera: <a href=""/home"">camera #1</a></span><br/>
+            <p>On: 12:00</p>
+         </div>
+         <div class=""dropdown-item"">
+          <h>Intruder dectected!</h>
+          <span>camera: <a href=""/dmada"">camera #1</a></span>
+       </div>
+       <div class=""dropdown-item"">
+        <h>Intruder dectected!</h>
+        <span>camera: <a href=""/daokdlamkdla"">camera #1</a></span>
+     </div>
+     <div class=""view-more"">
+         <a>View More...</a>
+     </div>
+      </div>
+    </div>",,,,,,96,5/12/2021 13:25:29,Cyebukayire Peace & Phelix Dusengimana,Connecting to mysql using Python,"The code Snippet bellow tries to connect to localhost database using python.
+What you need to change is your host, database name, user name and the password of your database.
+
+Output of the snippet:
+Connected to MySQL Server version:  5.7.19
+You're connected to database:  ('MDCS')
+MySQL connection is closed",Web App,Backend,Python,"import mysql.connector
+from mysql.connector import Error
+
+try:
+    connection = mysql.connector.connect(host='localhost',
+                                         database='MDCS',
+                                         user='rot',
+                                         password='mdcs@#29')
+    if connection.is_connected():
+        db_Info = connection.get_server_info()
+        print(""Connected to MySQL Server version: "" db_Info)
+        cursor = connection.cursor()
+        cursor.execute(""select database();"")
+        record = cursor.fetchone()
+        print(""You're connected to database: "" record)
+
+except Error as e:
+    print(""Error while connecting to MySQL"", e)
+finally:
+    if connection.is_connected():
+        cursor.close()
+        connection.close()
+        print(""MySQL connection is closed"")
+",,,,,,97,5/12/2021 20:49:57,Cyebukayire Peace and Phelix Dusengimana,Creating MySQL table from Python,"From the previous snippet, we saw how to connect to a MySQL server from Python, In this snippet, we will create a table in MySQL from Python. Let’s create table ‘cameras’ under the ‘MDCS’ database.
+
+Output will be:
+
+cameras table is created successfully 
+MySQL connection is closed
+",Web App,Backend,Python,"import mysql.connector
+
+try:
+    connection = mysql.connector.connect(host='localhost',
+                                         database='MDCS',
+                                         user='root',
+                                         password='MDCS@#29')
+
+    mySql_Create_Table_Query = """"""CREATE TABLE cameras ( 
+                             Id int(11) NOT NULL,
+                             Name varchar(250) NOT NULL,
+                             Location varchar(250) NOT NULL,
+                             registration_date Date NOT NULL,
+                             PRIMARY KEY (Id)) """"""
+
+    cursor = connection.cursor()
+    result = cursor.execute(mySql_Create_Table_Query)
+    print(""cameras table is created successfully "")
+
+except mysql.connector.Error as error:
+    print(""Failed to create table in MySQL: {}"".format(error))
+finally:
+    if connection.is_connected():
+        cursor.close()
+        connection.close()
+        print(""MySQL connection is closed"")
+",,,,,,98,5/13/2021 10:22:14,Cyebukayire Peace and Dusengimana Phelix,Connecting and Inserting data to database using python,"The snippets below are made of 3 files.
+file one is called config.ini: contains credentials of the database
+file two is called dbconnector.py: it uses config.ini to connect to the database and returns the database credentials 
+file three is called: connect.py: it connects to the database using dbconnector.py",Web App,Backend,Python,"FILE 1: config.ini
+
+[mysql]
+host = localhost
+database = MDCS
+user = root
+password = dkfj234@2
+
+
+
+
+
+FILE 2: dbconnector.py
+
+from configparser import ConfigParser
+
+
+def read_db_config(filename='config.ini', section='mysql'):
+    """""" Read database configuration file and return a dictionary object
+    :param filename: name of the configuration file
+    :param section: section of database configuration
+    :return: a dictionary of database parameters
+    """"""
+    # create parser and read ini configuration file
+    parser = ConfigParser()
+    parser.read(filename)
+
+    # get section, default to mysql
+    db = {}
+    if parser.has_section(section):
+        items = parser.items(section)
+        for item in items:
+            db[item[0]] = item[1]
+    else:
+        raise Exception('{0} not found in the {1} file'.format(section, filename))
+
+    return db
+
+
+
+
+FILE 3: connect.py
+
+from mysql.connector import MySQLConnection, Error
+from dbconnector import read_db_config
+
+
+def connect():
+    """""" Connect to MySQL database """"""
+
+    db_config = read_db_config()
+    conn = None
+    try:
+        print('Connecting to MySQL database...')
+        conn = MySQLConnection(**db_config)
+
+        if conn.is_connected():
+            print('Connection established.')
+        else:
+            print('Connection failed.')
+
+    except Error as error:
+        print(error)
+
+    finally:
+        if conn is not None and conn.is_connected():
+            conn.close()
+            print('Connection closed.')
+
+
+if __name__ == '__main__':
+    connect()
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
