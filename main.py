@@ -8,7 +8,4 @@ app = Flask(__name__)
 def getCode():
     if(request.method == 'POST'):
         return jsonify({"query": request.form["query"]})
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
+    return "<h1>Welcome </h1>"
