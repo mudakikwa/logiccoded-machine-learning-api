@@ -28,7 +28,7 @@ def getCode():
 
         def get_code_from_index(index):
             try:
-                return print(df.loc[df['number'] == index]["code"].values[0])
+                return df.loc[df['number'] == index]["code"].values[0]
             except Exception:
                 pass
 
@@ -40,7 +40,7 @@ def getCode():
         code_index = get_index_from_title(code_title)
         similar_code = list(enumerate(cosine_sim[code_index]))
         sorted_code = sorted(similar_code, key=lambda x: x[1], reverse=True)
-        i = 0
-        return jsonify({"query": get_code_from_index(element[0])})
+        print(sorted_code[0][0])
+        return jsonify({"query": get_code_from_index(sorted_code[0][0])})
 
     return "<h1>Welcome </h1>"
